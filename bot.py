@@ -11,7 +11,8 @@ intents.message_content = True
 cfg = dotenv_values()
 bot = Bot(command_prefix="!", intents=intents)
 
-very_cheap = re.compile(r"(c[óo](?: m[ỗo]i)?|m[ỗo]i) (.+?)(\s*(?:k|m|b|ng[àa]n|ngh[ìi]n|tri[ệe]u|t[iỉ]|t[yỷ])(?: [dđ][oồ]ng)?)\b", re.IGNORECASE)
+very_cheap = re.compile(r"(c[óo](?: m[ỗo]i)?|m[ỗo]i) (\S+?)(\s*(?:k|m|b|ng[àa]n|ngh[ìi]n|tri[ệe]u|t[iỉ]|t[yỷ])(?: [dđ][oồ]ng)?)\b", re.IGNORECASE)
+very_cheap_2 = re.compile(r"(\S+?)(\s*(?:k|m|b|ng[àa]n|ngh[ìi]n|tri[ệe]u|t[iỉ]|t[yỷ])(?: [dđ][oồ]ng)?) (th[oô]i|ch[uứ] m[aấ]y)")
 funny = ["rất rẻ", "quá ít", "rất ít"]
 
 def process_homoglyphs(content: str) -> str:
@@ -32,14 +33,17 @@ async def on_message(message: discord.Message):
     if message.author.id != int(cfg["LUNA_USER_ID"]):
         return
     
-    m = very_cheap.search(message.content)
-    if m is None:
-        return
+    if (m := very_cheap.search(message.content)) is not None:
+        only = m.group(1)
+        price = process_homoglyphs(m.group(2))
+        denomination = m.group(3)
+        await message.reply(f"{only} {price}{denomination} ({random.choice(funny)})", mention_author=False)
+    elif (m := very_cheap_2.search(message.content)) is not None:
+        only = m.group(3)
+        price = process_homoglyphs(m.group(1))
+        denomination = m.group(2)
+        await message.reply(f"{price}{denomination} {only} ({random.choice(funny)})", mention_author=False)
     
-    only = m.group(1)
-    price = process_homoglyphs(m.group(2))
-    denomination = m.group(3)
-    await message.reply(f"{only} {price}{denomination} ({random.choice(funny)})", mention_author=False)
 
 if __name__ == "__main__":
     bot.run(cfg["TOKEN"])
