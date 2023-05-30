@@ -19,7 +19,7 @@ async def on_message(message: discord.Message):
     if message.author.id != int(cfg["LUNA_USER_ID"]):
         return
     
-    m = very_cheap.search(message.content)
+    m = very_cheap.search(message.content, re.IGNORECASE)
     if m is None:
         return
     
