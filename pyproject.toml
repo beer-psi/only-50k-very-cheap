@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "only-50k-very-cheap"
+version = "0.1.0"
+description = "(rất rẻ)"
+authors = ["beerpiss <lacvtg.a1.2023@gmail.com>"]
+license = "0BSD"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+"discord.py" = "^2.2.3"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
