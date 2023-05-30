@@ -11,8 +11,8 @@ intents.message_content = True
 cfg = dotenv_values()
 bot = Bot(command_prefix="!", intents=intents)
 
-very_cheap = re.compile(r"(c[óo](?: m[ỗo]i)?|m[ỗo]i) (\S+?)(\s*(?:k|m|b|ng[àa]n|ngh[ìi]n|tri[ệe]u|t[iỉ]|t[yỷ])(?: [dđ][oồ]ng)?)\b", re.IGNORECASE)
-very_cheap_2 = re.compile(r"(\S+?)(\s*(?:k|m|b|ng[àa]n|ngh[ìi]n|tri[ệe]u|t[iỉ]|t[yỷ])(?: [dđ][oồ]ng)?) (th[oô]i|ch[uứ] m[aấ]y)")
+very_cheap = re.compile(r"(c[óo](?: m[ỗo]i)?|m[ỗo]i) (\S+?)(\s*(?:k|m|b|ng[àa]n|ngh[ìi]n|tri[ệe]u|t[iỉ]|t[yỷ])(?: [dđ₫][oồ]ng)?)\b", re.IGNORECASE)
+very_cheap_2 = re.compile(r"(\S+?)(\s*(?:k|m|b|ng[àa]n|ngh[ìi]n|tri[ệe]u|t[iỉ]|t[yỷ])(?: [dđ₫][oồ]ng)?) (th[oô]i|ch[uứ] m[aấ]y)")
 funny = ["rất rẻ", "quá ít", "rất ít"]
 
 def process_homoglyphs(content: str) -> str:
