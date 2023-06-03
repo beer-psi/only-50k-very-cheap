@@ -2,14 +2,14 @@ import random
 import re
 
 import discord
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, Context
 from dotenv import dotenv_values
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 cfg = dotenv_values()
-bot = Bot(command_prefix="!", intents=intents)
+bot = Bot(command_prefix="luna>", intents=intents)
 
 very_cheap = re.compile(r"(?P<only>m[oỗ]i|c[oó])\s*(?P<price>\S+\s*(?:k|m|b|ng[aà]n|ngh[iì]n|tr(?:i[eệ]u)?|t[iỉ]|t[yỷ])(?:\s*[dđ][oồ]ng|₫|\S*)?)", re.IGNORECASE)
 very_cheap_2 = re.compile(r"(?P<price>\S+\s*(?:k|m|b|ng[aà]n|ngh[iì]n|tr(?:i[eệ]u)?|t[iỉ]|t[yỷ])(?:\s*[dđ][oồ]ng|₫|\S*)?)\s*(?P<only>th[oô]i|ch[uứ] m[aấ]y)", re.IGNORECASE)
@@ -41,6 +41,13 @@ async def on_message(message: discord.Message):
         only = m.group("only")
         price = process_homoglyphs(m.group("price"))
         await message.reply(f"{price} {only} ({random.choice(funny)})", mention_author=False)
+
+@bot.command()
+async def test(ctx: Context, content: str):
+    if very_cheap.search(content) is not None:
+        await ctx.message.add_reaction("✅")
+    elif very_cheap_2.search(content) is not None:
+        await ctx.message.add_reaction("✅")
     
 
 if __name__ == "__main__":
