@@ -28,13 +28,12 @@ def process_homoglyphs(content: str) -> str:
     content = re.sub(r"[9️⃣৭੧୨൭ⳊꝮ９𑢬𑣌𑣖𝟗𝟡𝟫𝟵𝟿🯹]", "9", content)
     return content
 
-@bot.event
+@bot.listen()
 async def on_message(message: discord.Message):
     if message.author.id != int(cfg["LUNA_USER_ID"]):
         return
     
-    if message.content.startswith("l>test"):
-        await test(message, content=message.content[6:])
+    if message.content.startswith("l>"):
         return
     
     if (m := very_cheap.search(message.content)) is not None:
@@ -47,7 +46,9 @@ async def on_message(message: discord.Message):
         await message.reply(f"{price} {only} ({random.choice(funny)})", mention_author=False)
 
 
-async def test(message: discord.Message, content: str):
+@bot.command()
+async def test(ctx: Context, *, content: str):
+    message = ctx.message
     if very_cheap.search(content) is not None:
         await message.add_reaction("✅")
     elif very_cheap_2.search(content) is not None:
