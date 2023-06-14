@@ -1,61 +1,79 @@
-import random
-import re
+import logging
+import logging.handlers
+import asyncio
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import discord
-from discord.ext.commands import Bot, Context
+from discord.ext import commands
+from discord.ext.commands import Bot
 from dotenv import dotenv_values
+
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-cfg = dotenv_values()
+BOT_DIR = Path(__file__).absolute().parent
+cfg = dotenv_values(BOT_DIR / ".env")
 bot = Bot(command_prefix="l>", intents=intents)
 
-very_cheap = re.compile(r"(?P<only>m[oỗ]i|c[oó])\s+(?P<price>\d+\s*(?:k|m|b|ng[aà]n|ngh[iì]n|tr(?:i[eệ]u)?|t[iỉ]|t[yỷ])(?:\s*[dđ][oồ]ng|₫)?)", re.IGNORECASE)
-very_cheap_2 = re.compile(r"(?P<price>\d+\s*(?:k|m|b|ng[aà]n|ngh[iì]n|tr(?:i[eệ]u)?|t[iỉ]|t[yỷ])(?:\s*[dđ][oồ]ng|₫)?)\s*(?P<only>th[oô]i|ch[uứ] m[aấ]y)", re.IGNORECASE)
-funny = ["rất rẻ", "quá ít", "rất ít"]
 
-def process_homoglyphs(content: str) -> str:
-    content = re.sub(r"[0️⃣OoΟοσОоՕօסه٥ھہە۵߀०০੦૦ଠ୦௦ం౦ಂ೦ംഠ൦ං๐໐ဝ၀ჿዐᴏᴑℴⲞⲟⵔ〇ꓳꬽﮦﮧﮨﮩﮪﮫﮬﮭﻩﻪﻫﻬ０Ｏｏ𐊒𐊫𐐄𐐬𐓂𐓪𐔖𑓐𑢵𑣈𑣗𑣠𝐎𝐨𝑂𝑜𝑶𝒐𝒪𝓞𝓸𝔒𝔬𝕆𝕠𝕺𝖔𝖮𝗈𝗢𝗼𝘖𝘰𝙊𝙤𝙾𝚘𝚶𝛐𝛔𝛰𝜊𝜎𝜪𝝄𝝈𝝤𝝾𝞂𝞞𝞸𝞼𝟎𝟘𝟢𝟬𝟶𞸤𞹤𞺄🯰]", "0", content)
-    content = re.sub(r"[1️⃣Iil|ıƖǀɩɪ˛ͺΙιІіӀӏ׀וןا١۱ߊᎥᛁιℐℑℓℹⅈⅠⅰⅼ∣⍳⏽Ⲓⵏꓲꙇꭵﺍﺎ１Ｉｉｌ￨𐊊𐌉𐌠𑣃𖼨𝐈𝐢𝐥𝐼𝑖𝑙𝑰𝒊𝒍𝒾𝓁𝓘𝓲𝓵𝔦𝔩𝕀𝕚𝕝𝕴𝖎𝖑𝖨𝗂𝗅𝗜𝗶𝗹𝘐𝘪𝘭𝙄𝙞𝙡𝙸𝚒𝚕𝚤𝚰𝛊𝛪𝜄𝜤𝜾𝝞𝝸𝞘𝞲𝟏𝟙𝟣𝟭𝟷𞣇𞸀𞺀🯱]", "1", content)
-    content = re.sub(r"2️⃣ƧϨᒿꙄꛯꝚ２𝟐𝟚𝟤𝟮𝟸🯲", "2", content)
-    content = re.sub(r"[3️⃣ƷȜЗӠⳌꝪꞫ３𑣊𖼻𝈆𝟑𝟛𝟥𝟯𝟹🯳]", "3", content)
-    content = re.sub(r"[4️⃣Ꮞ４𑢯𝟒𝟜𝟦𝟰𝟺🯴]", "4", content)
-    content = re.sub(r"[5️⃣Ƽ５𑢻𝟓𝟝𝟧𝟱𝟻🯵]", "5", content)
-    content = re.sub(r"[6️⃣бᏮⳒ６𑣕𝟔𝟞𝟨𝟲𝟼🯶]", "6", content)
-    content = re.sub(r"[7️⃣７𐓒𑣆𝈒𝟕𝟟𝟩𝟳𝟽🯷]", "7", content)
-    content = re.sub(r"[8️⃣Ȣȣ৪੪ଃ８𐌚𝟖𝟠𝟪𝟴𝟾𞣋🯸]", "8", content)
-    content = re.sub(r"[9️⃣৭੧୨൭ⳊꝮ９𑢬𑣌𑣖𝟗𝟡𝟫𝟵𝟿🯹]", "9", content)
-    return content
+class VeryCheapBot(Bot):
+    cfg: dict[str, str | None]
 
-@bot.listen()
-async def on_message(message: discord.Message):
-    if message.author.id != int(cfg["LUNA_USER_ID"]):
-        return
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+async def startup():
+    logger = logging.getLogger("discord")
+    logger.setLevel(logging.DEBUG)
+
+    handler = logging.handlers.RotatingFileHandler(
+        filename="discord.log",
+        encoding="utf-8",
+        maxBytes=32 * 1024 * 1024,  # 32 MiB
+        backupCount=5,  # Rotate through 5 files
+    )
+    dt_fmt = "%Y-%m-%d %H:%M:%S"
+    formatter = logging.Formatter(
+        "[{asctime}] [{levelname:<8}] {name}: {message}", dt_fmt, style="{"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    (intents := discord.Intents.default()).message_content = True
+    bot = VeryCheapBot(command_prefix=commands.when_mentioned_or("l>"), intents=intents)
+
+    for file in (BOT_DIR / "cogs").glob("*.py"):
+        if file.stem in ["hotreload", "botutils", "__init__"]:
+            continue
+        try:
+            await bot.load_extension(f"cogs.{file.stem}")
+            print(f"Loaded cogs.{file.stem}")
+        except Exception as e:
+            print(f"Failed to load extension cogs.{file.stem}")
+            print(f"{type(e).__name__}: {e}")
     
-    if message.content.startswith("l>"):
-        return
-    
-    if (m := very_cheap.search(message.content)) is not None:
-        only = m.group("only")
-        price = process_homoglyphs(m.group("price"))
-        await message.reply(f"{only} {price} ({random.choice(funny)})", mention_author=False)
-    elif (m := very_cheap_2.search(message.content)) is not None:
-        only = m.group("only")
-        price = process_homoglyphs(m.group("price"))
-        await message.reply(f"{price} {only} ({random.choice(funny)})", mention_author=False)
+    bot.cfg = cfg
 
+    if (token := cfg.get("TOKEN")) is None:
+        sys.exit(
+            "[ERROR] Token not found, make sure 'TOKEN' is set in the '.env' file. Exiting."
+        )
 
-@bot.command()
-async def test(ctx: Context, *, content: str):
-    message = ctx.message
-    if very_cheap.search(content) is not None:
-        await message.add_reaction("✅")
-    elif very_cheap_2.search(content) is not None:
-        await message.add_reaction("✅")
-    else:
-        await message.add_reaction("❌")
+    try:
+        await bot.start(token)
+    except discord.LoginFailure:
+        sys.exit(
+            "[ERROR] Token not found, make sure 'TOKEN' is set in the '.env' file. Exiting."
+        )
+    except discord.PrivilegedIntentsRequired:
+        sys.exit(
+            "[ERROR] Message Content Intent not enabled, go to 'https://discord.com/developers/applications' and enable the Message Content Intent. Exiting."
+        )
     
 
 if __name__ == "__main__":
-    bot.run(cfg["TOKEN"])
+    asyncio.run(startup())
