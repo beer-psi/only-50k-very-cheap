@@ -9,8 +9,9 @@ from bot import VeryCheapBot
 
 
 BASE_URL = "hentaivn.site"
-HVN_MANGA_DETAILS_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-doc-truyen-(?P<slug>[0-9a-z-]+)\.html")
-HVN_CHAPTER_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-(?P<chapter_id>\d+)-xem-truyen-(?P<slug>[0-9a-z-]+)\.html")
+HR_REGEX = re.compile(r"^-{3,}$", re.MULTILINE)
+HVN_MANGA_DETAILS_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-doc-truyen-(?P<slug>[0-9a-zA-F-%]+)\.html")
+HVN_CHAPTER_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-(?P<chapter_id>\d+)-xem-truyen-(?P<slug>[0-9a-zA-F%-]+)\.html")
 
 
 class HVNCog(commands.Cog, name="HVN"):
@@ -52,7 +53,7 @@ class HVNCog(commands.Cog, name="HVN"):
             if (genre_elems := info_elem.select('p:-soup-contains("Thể Loại:") a')) is not None and len(genre_elems) > 0:
                 embed.add_field(name="Thể loại", value=", ".join(genre_elem.text.strip() for genre_elem in genre_elems), inline=False)
             if (description_elem := info_elem.select_one('p:-soup-contains("Nội dung:") + p')) is not None:
-                embed.description = description_elem.text.strip()
+                embed.description = HR_REGEX.split(description_elem.text.strip())[0]
             if (thumbnail_elem := soup.select_one(".main > .page-right > .right-info > .page-ava > img")) is not None:
                 embed.set_image(url=thumbnail_elem["src"])
         
