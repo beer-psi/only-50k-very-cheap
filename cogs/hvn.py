@@ -10,8 +10,8 @@ from bot import VeryCheapBot
 
 BASE_URL = "hentaivn.site"
 HR_REGEX = re.compile(r"^-{3,}$", re.MULTILINE)
-HVN_MANGA_DETAILS_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-doc-truyen-(?P<slug>[0-9a-zA-F-%]+)\.html")
-HVN_CHAPTER_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-(?P<chapter_id>\d+)-xem-truyen-(?P<slug>[0-9a-zA-F%-]+)\.html")
+HVN_MANGA_DETAILS_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-doc-truyen-(?P<slug>.+)\.html")
+HVN_CHAPTER_REGEX = re.compile(r"https?:\/\/(?P<domain>hentaivn\.(?:.*))\/(?P<manga_id>\d+)-(?P<chapter_id>\d+)-xem-truyen-(?P<slug>.+)\.html")
 
 
 class HVNCog(commands.Cog, name="HVN"):
