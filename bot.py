@@ -3,12 +3,13 @@ import logging.handlers
 import asyncio
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
 from dotenv import dotenv_values
+
+from scrapers import sources
 
 
 intents = discord.Intents.default()
@@ -75,5 +76,12 @@ async def startup():
         )
     
 
+async def shutdown():
+    await asyncio.gather(*[source.close() for source in sources])
+
+
 if __name__ == "__main__":
-    asyncio.run(startup())
+    try:
+        asyncio.run(startup())
+    except KeyboardInterrupt:
+        asyncio.run(shutdown())
