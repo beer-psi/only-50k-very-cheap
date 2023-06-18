@@ -8,8 +8,12 @@ from scrapers.source import Scraper
 from scrapers.source.types import MangaDetails, MangaStatus
 
 
-MANGA_DETAILS_REGEX = re.compile(r"https?:\/\/(?P<domain>(?:m\.)?blogtruyen(?:\.vn|moi\.com))\/(?P<manga_id>\d+)\/(?P<slug>[a-z\d-]+)")
-MANGA_CHAPTER_REGEX = re.compile(r"https?:\/\/(?P<domain>(?:m\.)?blogtruyen(?:\.vn|moi\.com))\/c(?P<chapter_id>\d+)\/(?P<slug>[a-z\d-]+)")
+MANGA_DETAILS_REGEX = re.compile(
+    r"https?:\/\/(?P<domain>(?:m\.)?blogtruyen(?:\.vn|moi\.com))\/(?P<manga_id>\d+)\/(?P<slug>[a-z\d-]+)"
+)
+MANGA_CHAPTER_REGEX = re.compile(
+    r"https?:\/\/(?P<domain>(?:m\.)?blogtruyen(?:\.vn|moi\.com))\/c(?P<chapter_id>\d+)\/(?P<slug>[a-z\d-]+)"
+)
 
 
 class BlogTruyen(Scraper):
@@ -17,7 +21,7 @@ class BlogTruyen(Scraper):
 
     def __init__(self) -> None:
         super().__init__()
-    
+
     def find_url(self, content: str) -> Optional[str]:
         details_url = MANGA_DETAILS_REGEX.search(content)
         if details_url is not None:
@@ -34,7 +38,7 @@ class BlogTruyen(Scraper):
             return await self._handle_manga(match.group(0))
         else:
             raise RuntimeError("Invalid URL")
-    
+
     async def _handle_chapter(self, uri: str) -> MangaDetails:
         url = URL(uri)
         resp = await self.session.get(url)
@@ -43,10 +47,10 @@ class BlogTruyen(Scraper):
         manga_elem = soup.select_one("div.breadcrumbs a:last-child")
         if manga_elem is None:
             raise RuntimeError("Manga element not found")
-        
+
         manga_url = f"https://{url.host}{manga_elem['href']}"
         return await self._handle_manga(manga_url)
-    
+
     async def _handle_manga(self, uri: str) -> MangaDetails:
         resp = await self.session.get(uri)
         soup = BeautifulSoup(await resp.text(), "html.parser")
@@ -70,18 +74,26 @@ class BlogTruyen(Scraper):
         if (elem := soup.select("span.category a")) is not None and len(elem) > 0:
             details.genres = [e.text.strip() for e in elem]
         if (elem := soup.select("span.color-red:not(.bold)")) is not None:
-            details.status = self._parse_status(" ".join([e.text.strip() for e in elem]))
-        if (synopsis_block := soup.select_one(".manga-detail .detail .content")) is not None:
+            details.status = self._parse_status(
+                " ".join([e.text.strip() for e in elem])
+            )
+        if (
+            synopsis_block := soup.select_one(".manga-detail .detail .content")
+        ) is not None:
             for tag in synopsis_block.select("p, br"):
                 tag.insert_before("\\n")
-            
-            if (fb_elements := synopsis_block.select(".fb-page, .fb-group")) is not None and len(fb_elements) > 0:
+
+            if (
+                fb_elements := synopsis_block.select(".fb-page, .fb-group")
+            ) is not None and len(fb_elements) > 0:
                 for fb_element in fb_elements:
                     fb_element.decompose()
-            details.description = synopsis_block.text.replace("\\n", "\n").replace("\n ", "\n").strip()
-        
+            details.description = (
+                synopsis_block.text.replace("\\n", "\n").replace("\n ", "\n").strip()
+            )
+
         return details
-    
+
     def _parse_status(self, status: str) -> MangaStatus:
         if "Đang tiến hành" in status:
             return MangaStatus.ONGOING
