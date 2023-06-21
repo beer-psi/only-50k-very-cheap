@@ -80,7 +80,7 @@ class FeedCog(Cog):
         pass
 
     @feed.command()
-    async def add(self, ctx: Context, url: str, channel: discord.TextChannel):
+    async def add(self, ctx: Context, channel: discord.TextChannel, url: str):
         reader = self.reader
         reader.add_feed(url)
         reader.update_feed(url)
