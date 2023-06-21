@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import gather, to_thread
 from typing import TYPE_CHECKING
 
 import discord
@@ -13,10 +13,10 @@ if TYPE_CHECKING:
     from bot import VeryCheapBot
 
 
-def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
-    color = discord.Color.from_str(str(reader.get_tag(entry.feed_url, "color", "#000000")))
+async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
+    color = discord.Color.from_str(str(await to_thread(reader.get_tag, entry.feed_url, "color", "#000000")))
     
-    icon_url = reader.get_tag(entry.feed_url, "icon_url", None)
+    icon_url = await to_thread(reader.get_tag, entry.feed_url, "icon_url", None)
     if icon_url is not None:
         icon_url = str(icon_url)
 
@@ -59,11 +59,11 @@ class FeedCog(Cog):
     @tasks.loop(minutes=5)   
     async def update_feeds(self, feed_url: str | None = None):
         reader = self.reader
-        await asyncio.to_thread(reader.update_feeds)
+        await to_thread(reader.update_feeds)
 
-        entries = await asyncio.to_thread(reader.get_entries, feed=feed_url, read=False)
+        entries = await to_thread(reader.get_entries, feed=feed_url, read=False)
         for entry in entries:
-            channel_id = str(reader.get_tag(entry.feed_url, "channel_id", "-1"))
+            channel_id = str(await to_thread(reader.get_tag, entry.feed_url, "channel_id", "-1"))
             if not channel_id.isdigit():
                 continue
 
@@ -72,8 +72,8 @@ class FeedCog(Cog):
             if channel is None:
                 continue
 
-            await channel.send(embeds=entry_to_embed(reader, entry))
-            await asyncio.to_thread(reader.set_entry_read, entry, True)
+            await channel.send(embeds=await entry_to_embed(reader, entry))
+            await to_thread(reader.set_entry_read, entry, True)
         
     @commands.group("feed", invoke_without_command=True)
     async def feed(self, ctx: Context):
@@ -83,20 +83,21 @@ class FeedCog(Cog):
     @commands.has_permissions(manage_channels=True)
     async def add(self, ctx: Context, channel: discord.TextChannel, url: str):
         reader = self.reader
-        await asyncio.to_thread(reader.add_feed, url)
-        await asyncio.to_thread(reader.update_feed, url)
-        reader.set_tag(url, "channel_id", str(channel.id))
+        await to_thread(reader.add_feed, url)
+        await to_thread(reader.update_feed, url)
+        await to_thread(reader.set_tag, url, "channel_id", str(channel.id))
         
-        entries = await asyncio.to_thread(reader.get_entries, feed=url, read=False)
-        for entry in entries:
-            reader.set_entry_read(entry, True)
+        entries = await to_thread(reader.get_entries, feed=url, read=False)
+
+        coros = [to_thread(reader.set_entry_read, entry, True) for entry in entries]
+        await gather(*coros)
         await ctx.reply(f"Added feed {url} to channel {channel.mention}", mention_author=False)
 
     @feed.command()
     @commands.has_permissions(manage_channels=True)
     async def remove(self, ctx: Context, url: str):
         reader = self.reader
-        await asyncio.to_thread(reader.delete_feed, url)
+        await to_thread(reader.delete_feed, url)
         await ctx.reply(f"Removed feed {url}", mention_author=False)
     
     @feed.command()
@@ -107,9 +108,9 @@ class FeedCog(Cog):
         embed = discord.Embed(title="Feeds")
         embed.description = ""
 
-        feeds = await asyncio.to_thread(reader.get_feeds)
+        feeds = await to_thread(reader.get_feeds)
         for feed in feeds:
-            channel_id = str(reader.get_tag(feed.url, "channel_id", "-1"))
+            channel_id = str(await to_thread(reader.get_tag, feed.url, "channel_id", "-1"))
             embed.description += f"{feed.url} posting to <#{channel_id}>\n"
         await ctx.reply(embed=embed, mention_author=False)
     
@@ -128,24 +129,24 @@ class FeedCog(Cog):
     async def latest(self, ctx: Context, feed_url: str | None = None):
         reader = self.reader
         if feed_url is None:
-            entries = await asyncio.to_thread(reader.get_entries)
+            entries = await to_thread(reader.get_entries)
             entry = next(entries, None)
         else:
-            entries = await asyncio.to_thread(reader.get_entries, feed=feed_url)
+            entries = await to_thread(reader.get_entries, feed=feed_url)
             entry = next(entries, None)
         
         if entry is None:
             await ctx.reply("No new entries", mention_author=False)
             return
         
-        embeds = entry_to_embed(reader, entry)
+        embeds = await entry_to_embed(reader, entry)
         await ctx.reply(embeds=embeds, mention_author=False)
     
     @feed.command()
     @commands.has_permissions(manage_channels=True)
     async def config(self, ctx: Context, feed_url: str, key: str, value: str):
         reader = self.reader
-        await asyncio.to_thread(reader.set_tag, feed_url, key, value)
+        await to_thread(reader.set_tag, feed_url, key, value)
         await ctx.reply(f"Set {key} to {value} for feed {feed_url}", mention_author=False)
 
 async def setup(bot: "VeryCheapBot"):
