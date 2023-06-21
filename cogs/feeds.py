@@ -80,6 +80,7 @@ class FeedCog(Cog):
         pass
 
     @feed.command()
+    @commands.has_permissions(manage_channels=True)
     async def add(self, ctx: Context, channel: discord.TextChannel, url: str):
         reader = self.reader
         reader.add_feed(url)
@@ -91,12 +92,14 @@ class FeedCog(Cog):
         await ctx.reply(f"Added feed {url} to channel {channel.mention}", mention_author=False)
 
     @feed.command()
+    @commands.has_permissions(manage_channels=True)
     async def remove(self, ctx: Context, url: str):
         reader = self.reader
         reader.delete_feed(url)
         await ctx.reply(f"Removed feed {url}", mention_author=False)
     
     @feed.command()
+    @commands.has_permissions(manage_channels=True)
     async def list(self, ctx: Context):
         reader = self.reader
         
@@ -108,6 +111,7 @@ class FeedCog(Cog):
         await ctx.reply(embed=embed, mention_author=False)
     
     @feed.command()
+    @commands.has_permissions(manage_channels=True)
     async def update(self, ctx: Context, feed_url: str | None = None):
         if feed_url is None:
             await self.update_feeds()
@@ -117,6 +121,7 @@ class FeedCog(Cog):
             await ctx.reply(f"Updated feed {feed_url}", mention_author=False)
     
     @feed.command()
+    @commands.has_permissions(manage_channels=True)
     async def latest(self, ctx: Context, feed_url: str | None = None):
         reader = self.reader
         if feed_url is None:
@@ -132,6 +137,7 @@ class FeedCog(Cog):
         await ctx.reply(embeds=embeds, mention_author=False)
     
     @feed.command()
+    @commands.has_permissions(manage_channels=True)
     async def config(self, ctx: Context, feed_url: str, key: str, value: str):
         reader = self.reader
         reader.set_tag(feed_url, key, value)
