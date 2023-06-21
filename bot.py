@@ -11,13 +11,11 @@ from dotenv import dotenv_values
 
 from scrapers import sources
 
-
 intents = discord.Intents.default()
 intents.message_content = True
 
 BOT_DIR = Path(__file__).absolute().parent
 cfg = dotenv_values(BOT_DIR / ".env")
-bot = Bot(command_prefix="l>", intents=intents)
 
 
 class VeryCheapBot(Bot):
@@ -57,6 +55,7 @@ async def startup():
             print(f"Failed to load extension cogs.{file.stem}")
             print(f"{type(e).__name__}: {e}")
     
+
     bot.cfg = cfg
 
     if (token := cfg.get("TOKEN")) is None:
