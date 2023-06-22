@@ -97,13 +97,13 @@ class FeedCog(Cog):
             webhook = webhooks.get(entry.feed_url, None)
             if webhook is None:
                 if (webhook_url := await to_thread(reader.get_tag, entry.feed_url, "webhook_url", None)) is not None:
-                    webhook = Webhook.from_url(str(webhook_url))
+                    webhook = Webhook.from_url(str(webhook_url), client=self.bot)
                 else:
                     webhook = await channel.create_webhook(name=entry.feed.title or "Feed", avatar=icon)
                     await to_thread(reader.set_tag, entry.feed_url, "webhook_url", webhook.url)
                 webhooks[entry.feed_url] = webhook
 
-            await webhook.send(embeds=await entry_to_embed(reader, entry), wait=True)
+            await webhook.send(content=f"[Posted]({entry.link})", embeds=await entry_to_embed(reader, entry), wait=True)
             await to_thread(reader.set_entry_read, entry, True)
         
     @update_feeds.error
