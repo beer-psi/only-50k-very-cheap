@@ -94,11 +94,14 @@ class FeedCog(Cog):
             else:
                 icon = None
 
-            webhook = webhooks.get(
-                entry.feed_url,
-                await channel.create_webhook(name=entry.feed.title or "Feed", avatar=icon)
-            )
-            webhooks[entry.feed_url] = webhook
+            webhook = webhooks.get(entry.feed_url, None)
+            if webhook is None:
+                if (webhook_url := str(await to_thread(reader.get_tag, entry.feed_url, "webhook_url", None))) is not None:
+                    webhook = Webhook.from_url(webhook_url)
+                else:
+                    webhook = await channel.create_webhook(name=entry.feed.title or "Feed", avatar=icon)
+                    await to_thread(reader.set_tag, entry.feed_url, "webhook_url", webhook.url)
+                webhooks[entry.feed_url] = webhook
 
             await webhook.send(embeds=await entry_to_embed(reader, entry), wait=True)
             await to_thread(reader.set_entry_read, entry, True)
