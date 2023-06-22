@@ -73,7 +73,7 @@ class FeedCog(Cog):
         else:
             self.logger.debug("Updating all feeds (scheduled)")
         reader = self.reader
-        await to_thread(reader.update_feeds)
+        await to_thread(reader.update_feeds, workers=10)
 
         entries = await to_thread(reader.get_entries, feed=feed_url, read=False)
         webhooks = {}
@@ -87,23 +87,24 @@ class FeedCog(Cog):
             if channel is None or not isinstance(channel, discord.TextChannel):
                 continue
 
-            icon_url = await to_thread(reader.get_tag, entry.feed_url, "icon_url", None)
-            if icon_url is not None:
-                async with aiohttp.ClientSession() as session, session.get(icon_url) as resp:
-                    icon = await resp.read()
-            else:
-                icon = None
-
-            webhook = webhooks.get(entry.feed_url, None)
+            webhook = webhooks.get(channel_id, None)
             if webhook is None:
-                if (webhook_url := await to_thread(reader.get_tag, entry.feed_url, "webhook_url", None)) is not None:
+                if (webhook_url := await to_thread(reader.get_tag, (), f"webhook_url_{channel_id}", None)) is not None:
                     webhook = Webhook.from_url(str(webhook_url), client=self.bot)
                 else:
-                    webhook = await channel.create_webhook(name=entry.feed.title or "Feed", avatar=icon)
-                    await to_thread(reader.set_tag, entry.feed_url, "webhook_url", webhook.url)
-                webhooks[entry.feed_url] = webhook
+                    webhook = await channel.create_webhook(name="Feed giá rẻ")
+                    await to_thread(reader.set_tag, (), f"webhook_url_{channel_id}", webhook.url)
+                webhooks[channel_id] = webhook
 
-            await webhook.send(content=f"[Posted]({entry.link})", embeds=await entry_to_embed(reader, entry), wait=True)
+            icon_url = await to_thread(reader.get_tag, entry.feed_url, "icon_url", None)
+
+            await webhook.send(
+                username=entry.feed.title if entry.feed.title is not None else "Feed giá rẻ",
+                avatar_url=str(icon_url) if icon_url is not None else None,
+                content=f"[Posted]({entry.link})", 
+                embeds=await entry_to_embed(reader, entry), 
+                wait=True
+            )
             await to_thread(reader.set_entry_read, entry, True)
         
     @update_feeds.error
