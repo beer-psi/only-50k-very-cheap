@@ -67,37 +67,43 @@ class FeedCog(Cog):
     #     return make_reader(str(BOT_DIR / "database" / "reader" / f"{id}.sqlite3"))
 
     @tasks.loop(time=[time(hour=x // 2, minute=x % 2 * 30 + 1) for x in range(48)])
-    async def update_feeds(self, feed_url: str | None = None):
+    async def update_feeds(self, feed_url: str | None = None, scheduled = True):
         if feed_url is not None:
-            self.logger.debug(f"Updating feed {feed_url}")
+            await to_thread(self.logger.info, f"Updating feed {feed_url}" + (" (scheduled)" if scheduled else ""))
         else:
-            self.logger.debug("Updating all feeds (scheduled)")
+            await to_thread(self.logger.info, "Updating all feeds" + (" (scheduled)" if scheduled else ""))
         reader = self.reader
         await to_thread(reader.update_feeds, workers=10)
 
         entries = await to_thread(reader.get_entries, feed=feed_url, read=False)
         webhooks = {}
+        new_post_count = 0
         for entry in entries:
+            new_post_count += 1
             channel_id = str(await to_thread(reader.get_tag, entry.feed_url, "channel_id", "-1"))
             if not channel_id.isdigit():
+                await to_thread(self.logger.warn, f"Invalid channel_id {channel_id} for feed {entry.feed_url}")
                 continue
 
             channel_id = int(channel_id)
             channel = self.bot.get_channel(channel_id)
             if channel is None or not isinstance(channel, discord.TextChannel):
+                await to_thread(self.logger.warn, f"Channel {channel_id} not found or is not a text channel for feed {entry.feed_url}")
                 continue
 
             webhook = webhooks.get(channel_id, None)
             if webhook is None:
                 if (webhook_url := await to_thread(reader.get_tag, (), f"webhook_url_{channel_id}", None)) is not None:
+                    await to_thread(self.logger.debug, f"Found webhook_url {webhook_url} for channel {channel_id}")
                     webhook = Webhook.from_url(str(webhook_url), client=self.bot)
                 else:
+                    await to_thread(self.logger.debug, f"Creating webhook for channel {channel_id}")
                     webhook = await channel.create_webhook(name="Feed giá rẻ")
                     await to_thread(reader.set_tag, (), f"webhook_url_{channel_id}", webhook.url)
                 webhooks[channel_id] = webhook
 
             icon_url = await to_thread(reader.get_tag, entry.feed_url, "icon_url", None)
-
+            
             await webhook.send(
                 username=entry.feed.title if entry.feed.title is not None else "Feed giá rẻ",
                 avatar_url=str(icon_url) if icon_url is not None else None,
@@ -106,6 +112,7 @@ class FeedCog(Cog):
                 wait=True
             )
             await to_thread(reader.set_entry_read, entry, True)
+        await to_thread(self.logger.info, f"Pushed {new_post_count} new posts")
         
     @update_feeds.error
     async def update_feeds_error(self, error):
