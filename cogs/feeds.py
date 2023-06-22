@@ -1,7 +1,10 @@
+import logging
+import logging.handlers
 from asyncio import gather, to_thread
 from datetime import time
 from typing import TYPE_CHECKING
 
+import aiohttp
 import discord
 from reader import make_reader, Entry, Reader
 from bs4 import BeautifulSoup
@@ -48,7 +51,14 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
 class FeedCog(Cog):
     def __init__(self, bot: "VeryCheapBot") -> None:
         self.bot = bot 
+        self.logger = logging.getLogger("cogs.feeds")
         self.reader: Reader = make_reader(str(BOT_DIR / "database" / "reader.sqlite3")) 
+
+        self.logger.debug("Starting update_feeds task")
+        self.logger.debug(self.update_feeds.start())
+    
+    async def cog_unload(self):
+        self.update_feeds.cancel()
     
     # def get_reader(self, ctx: Context) -> Reader:
     #     id = ctx.author.id
@@ -58,10 +68,15 @@ class FeedCog(Cog):
 
     @tasks.loop(time=[time(hour=x // 2, minute=x % 2 * 30 + 1) for x in range(48)])
     async def update_feeds(self, feed_url: str | None = None):
+        if feed_url is not None:
+            self.logger.debug(f"Updating feed {feed_url}")
+        else:
+            self.logger.debug("Updating all feeds (scheduled)")
         reader = self.reader
         await to_thread(reader.update_feeds)
 
         entries = await to_thread(reader.get_entries, feed=feed_url, read=False)
+        webhooks = {}
         for entry in entries:
             channel_id = str(await to_thread(reader.get_tag, entry.feed_url, "channel_id", "-1"))
             if not channel_id.isdigit():
@@ -72,9 +87,26 @@ class FeedCog(Cog):
             if channel is None or not isinstance(channel, discord.TextChannel):
                 continue
 
-            await channel.send(embeds=await entry_to_embed(reader, entry))
+            icon_url = await to_thread(reader.get_tag, entry.feed_url, "icon_url", None)
+            if icon_url is not None:
+                async with aiohttp.ClientSession() as session, session.get(icon_url) as resp:
+                    icon = await resp.read()
+            else:
+                icon = None
+
+            webhook = webhooks.get(
+                entry.feed_url,
+                await channel.create_webhook(name=entry.feed.title or "Feed", avatar=icon)
+            )
+            webhooks[entry.feed_url] = webhook
+
+            await webhook.send(embeds=await entry_to_embed(reader, entry), wait=True)
             await to_thread(reader.set_entry_read, entry, True)
         
+    @update_feeds.error
+    async def update_feeds_error(self, error):
+        self.logger.error(error)
+
     @commands.group("feed", invoke_without_command=True)
     async def feed(self, ctx: Context):
         pass

@@ -4,6 +4,7 @@ import asyncio
 import sys
 from pathlib import Path
 
+import aiosqlite
 import discord
 from discord.ext import commands
 from discord.ext.commands import Bot
@@ -46,15 +47,27 @@ async def startup():
     bot = VeryCheapBot(command_prefix=commands.when_mentioned_or("l>"), intents=intents)
 
     for file in (BOT_DIR / "cogs").glob("*.py"):
+        cogname = f"cogs.{file.stem}"
+        logger = logging.getLogger(cogname)
+        logger.setLevel(logging.DEBUG)
+
+        handler = logging.handlers.RotatingFileHandler(
+            filename=f"bot.log",
+            encoding="utf-8",
+            maxBytes=32 * 1024 * 1024,  # 32 MiB
+            backupCount=5,  # Rotate through 5 files
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
         if file.stem in ["hotreload", "botutils", "__init__"]:
             continue
         try:
-            await bot.load_extension(f"cogs.{file.stem}")
-            print(f"Loaded cogs.{file.stem}")
+            await bot.load_extension(cogname)
+            print(f"Loaded {cogname}")
         except Exception as e:
-            print(f"Failed to load extension cogs.{file.stem}")
+            print(f"Failed to load extension {cogname}")
             print(f"{type(e).__name__}: {e}")
-    
 
     bot.cfg = cfg
 
