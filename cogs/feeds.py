@@ -96,8 +96,8 @@ class FeedCog(Cog):
 
             webhook = webhooks.get(entry.feed_url, None)
             if webhook is None:
-                if (webhook_url := str(await to_thread(reader.get_tag, entry.feed_url, "webhook_url", None))) is not None:
-                    webhook = Webhook.from_url(webhook_url)
+                if (webhook_url := await to_thread(reader.get_tag, entry.feed_url, "webhook_url", None)) is not None:
+                    webhook = Webhook.from_url(str(webhook_url))
                 else:
                     webhook = await channel.create_webhook(name=entry.feed.title or "Feed", avatar=icon)
                     await to_thread(reader.set_tag, entry.feed_url, "webhook_url", webhook.url)
