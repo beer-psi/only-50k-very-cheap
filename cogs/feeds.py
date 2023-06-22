@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import discord
 from reader import make_reader, Entry, Reader
 from bs4 import BeautifulSoup
+from discord import Webhook
 from discord.ext import commands, tasks
 from discord.ext.commands import Cog, Context
 
@@ -26,20 +27,18 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
     images = [x.get("src") for x in soup.select("img") if x.get("src") is not None][:10]
     
     embeds = []
-    embed = (
-        discord.Embed(
-            url=entry.link,
-            description=description,
-            timestamp=entry.published,
-            color=color,
-        )
-            .set_image(url=images[0] if len(images) > 0 else None)
-            .set_author(name=entry.feed.title, url=entry.feed.link, icon_url=icon_url) 
-    )
-    embeds.append(embed)
+    base_embed = discord.Embed(url=entry.link)
+    
+    embed0 = base_embed.copy()
+    embed0.description = description
+    embed0.timestamp = entry.published
+    embed0.color = color
+    embed0.set_image(url=images[0] if len(images) > 0 else None)
+    embed0.set_author(name=entry.feed.title, url=entry.feed.link, icon_url=icon_url)
+    embeds.append(embed0)
 
     for image in images[1:]:
-        embed2 = embed.copy()
+        embed2 = base_embed.copy()
         embed2.set_image(url=image)
         embeds.append(embed2)    
 
@@ -70,7 +69,7 @@ class FeedCog(Cog):
 
             channel_id = int(channel_id)
             channel = self.bot.get_channel(channel_id)
-            if channel is None:
+            if channel is None or not isinstance(channel, discord.TextChannel):
                 continue
 
             await channel.send(embeds=await entry_to_embed(reader, entry))
