@@ -1,4 +1,5 @@
 from asyncio import gather, to_thread
+from datetime import time
 from typing import TYPE_CHECKING
 
 import discord
@@ -56,7 +57,7 @@ class FeedCog(Cog):
     #         id = ctx.guild.id
     #     return make_reader(str(BOT_DIR / "database" / "reader" / f"{id}.sqlite3"))
 
-    @tasks.loop(minutes=5)   
+    @tasks.loop(time=[time(hour=x // 2, minute=x % 2 * 30 + 1) for x in range(48)])
     async def update_feeds(self, feed_url: str | None = None):
         reader = self.reader
         await to_thread(reader.update_feeds)
