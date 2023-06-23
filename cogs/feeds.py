@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from discord import Webhook
 from discord.ext import commands, tasks
 from discord.ext.commands import Cog, Context
+from discord.utils import escape_markdown
 
 from bot import BOT_DIR
 
@@ -27,13 +28,13 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
 
     soup = BeautifulSoup(str(entry.summary), "html.parser")
     description = soup.get_text()
-    images = [x.get("src") for x in soup.select("img") if x.get("src") is not None][:10]
+    images = [x.get("src") for x in soup.select("img") if x.get("src") is not None][:4]
     
     embeds = []
     base_embed = discord.Embed(url=entry.link)
     
     embed0 = base_embed.copy()
-    embed0.description = description
+    embed0.description = escape_markdown(description)
     embed0.timestamp = entry.published
     embed0.color = color
     embed0.set_image(url=images[0] if len(images) > 0 else None)
