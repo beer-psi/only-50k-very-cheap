@@ -164,7 +164,15 @@ class FeedCog(Cog):
 
     @feed.command()
     @commands.has_permissions(manage_channels=True)
-    async def add(self, ctx: Context, channel: discord.TextChannel, url: str):
+    async def add(
+        self,
+        ctx: Context,
+        channel: discord.TextChannel
+        | discord.VoiceChannel
+        | discord.StageChannel
+        | discord.Thread,
+        url: str,
+    ):
         reader = self.reader
         await to_thread(reader.add_feed, url)
         await to_thread(reader.update_feed, url)
