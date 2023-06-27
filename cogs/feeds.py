@@ -4,7 +4,6 @@ from asyncio import gather, to_thread
 from datetime import time
 from typing import TYPE_CHECKING
 
-import aiohttp
 import discord
 from reader import make_reader, Entry, Reader
 from bs4 import BeautifulSoup
@@ -102,7 +101,10 @@ class FeedCog(Cog):
             channel_id = int(channel_id)
             channel = self.bot.get_channel(channel_id)
             if channel is None or (
-                not isinstance(channel, discord.abc.MessageableChannel)
+                not isinstance(channel, discord.TextChannel)
+                and not isinstance(channel, discord.Thread)
+                and not isinstance(channel, discord.StageChannel)
+                and not isinstance(channel, discord.VoiceChannel)
             ):
                 await to_thread(
                     self.logger.warn,
