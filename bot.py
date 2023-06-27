@@ -44,6 +44,7 @@ async def startup():
 
     (intents := discord.Intents.default()).message_content = True
     bot = VeryCheapBot(command_prefix=commands.when_mentioned_or("l>"), intents=intents)
+    bot.cfg = cfg
 
     for file in (BOT_DIR / "cogs").glob("*.py"):
         cogname = f"cogs.{file.stem}"
@@ -68,8 +69,6 @@ async def startup():
             print(f"Failed to load extension {cogname}")
             print(f"{type(e).__name__}: {e}")
 
-    bot.cfg = cfg
-
     if (token := cfg.get("TOKEN")) is None:
         sys.exit(
             "[ERROR] Token not found, make sure 'TOKEN' is set in the '.env' file. Exiting."
@@ -85,7 +84,7 @@ async def startup():
         sys.exit(
             "[ERROR] Message Content Intent not enabled, go to 'https://discord.com/developers/applications' and enable the Message Content Intent. Exiting."
         )
-    
+
 
 async def shutdown():
     await asyncio.gather(*[source.close() for source in sources])
