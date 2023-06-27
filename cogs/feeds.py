@@ -101,7 +101,9 @@ class FeedCog(Cog):
 
             channel_id = int(channel_id)
             channel = self.bot.get_channel(channel_id)
-            if channel is None or not isinstance(channel, discord.TextChannel):
+            if channel is None or (
+                not isinstance(channel, discord.abc.MessageableChannel)
+            ):
                 await to_thread(
                     self.logger.warn,
                     f"Channel {channel_id} not found or is not a text channel for feed {entry.feed_url}",
