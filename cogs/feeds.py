@@ -68,7 +68,7 @@ class FeedCog(Cog):
     #         id = ctx.guild.id
     #     return make_reader(str(BOT_DIR / "database" / "reader" / f"{id}.sqlite3"))
 
-    @tasks.loop(time=[time(hour=x // 2, minute=x % 2 * 30 + 1) for x in range(48)])
+    @tasks.loop(time=[time(hour=x // 6, minute=x % 6 * 10 + 5) for x in range(144)])
     async def update_feeds(self, feed_url: str | None = None, scheduled=True):
         if feed_url is not None:
             await to_thread(
