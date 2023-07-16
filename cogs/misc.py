@@ -24,3 +24,7 @@ class MiscCog(commands.Cog, name="Miscellaneous"):
             repo = m.group("repo")
             issue = m.group("issue")
             await message.channel.send(f"https://github.com/{username}/{repo}/issues/{issue}")
+
+
+async def setup(bot: VeryCheapBot):
+    await bot.add_cog(MiscCog(bot))
