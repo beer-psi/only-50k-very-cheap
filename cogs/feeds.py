@@ -28,8 +28,19 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
         icon_url = str(icon_url)
 
     soup = BeautifulSoup(str(entry.summary), "html.parser")
-    description = soup.get_text()
-    images = [x.get("src") for x in soup.select("img") if x.get("src") is not None][:4]
+    for br in soup.find_all("br"):
+        br.insert_before("\\n")
+    for p in soup.find_all("p"):
+        p.insert_before("\\n")
+    description = soup.get_text(strip=True).replace("\\n", "\n").replace("\n ", "\n")
+
+    images = []
+    for tag in soup.select("video, img"):
+        if tag.name == "video" and (img := tag.get("poster")) is not None:
+            images.append(img)
+        elif (img := tag.get("src")) is not None:
+            images.append(img)
+    images = images[:4]
 
     embeds = []
     base_embed = discord.Embed(url=entry.link)
