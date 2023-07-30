@@ -124,6 +124,7 @@ class FeedCog(Cog):
             channel = self.bot.get_channel(channel_id)
             
             link_name = "Posted"
+            link = (entry.link or "").replace("nitter.beerpsi.tech", "twitter.com")
             if entry.feed.title is not None:
                 if entry.feed.title.startswith("RT by"):
                     link_name = "Retweeted"
@@ -144,7 +145,7 @@ class FeedCog(Cog):
             ):
                 await channel.send(
                     embeds=await entry_to_embed(reader, entry),
-                    content=f"[{link_name}]({entry.link})",
+                    content=f"[{link_name}]({link})",
                 )
                 await to_thread(reader.set_entry_read, entry, True)
                 continue
@@ -178,7 +179,7 @@ class FeedCog(Cog):
                 if entry.feed.title is not None
                 else "Feed giá rẻ",
                 avatar_url=str(icon_url) if icon_url is not None else None,
-                content=f"[{link_name}]({entry.link})",
+                content=f"[{link_name}]({link})",
                 embeds=await entry_to_embed(reader, entry),
                 wait=True,
             )
