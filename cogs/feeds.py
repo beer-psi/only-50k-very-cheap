@@ -125,8 +125,8 @@ class FeedCog(Cog):
             
             link_name = "Posted"
             link = (entry.link or "").replace("nitter.beerpsi.tech", "twitter.com")
-            if entry.feed.title is not None:
-                if entry.feed.title.startswith("RT by"):
+            if entry.title is not None:
+                if entry.title.startswith("RT by"):
                     link_name = "Retweeted"
             if channel is None or (
                 not isinstance(channel, discord.TextChannel)
