@@ -52,9 +52,12 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
     embed0.set_image(url=images[0] if len(images) > 0 else None)
 
     author = entry.author
+    author_link = entry.feed.link
     if author is None:
-        author = entry.feed.title
-    embed0.set_author(name=author, url=entry.feed.link, icon_url=icon_url)
+        author = entry.feed.title or ""
+    if author.startswith("@"):
+        author_link = f"https://twitter.com/{author[1:]}"
+    embed0.set_author(name=author, url=author_link, icon_url=icon_url)
     embeds.append(embed0)
 
     for image in images[1:]:
@@ -115,6 +118,11 @@ class FeedCog(Cog):
 
             channel_id = int(channel_id)
             channel = self.bot.get_channel(channel_id)
+            
+            link_name = "Posted"
+            if entry.feed.title is not None:
+                if entry.feed.title.startswith("RT by"):
+                    link_name = "Retweeted"
             if channel is None or (
                 not isinstance(channel, discord.TextChannel)
                 and not isinstance(channel, discord.Thread)
@@ -130,10 +138,6 @@ class FeedCog(Cog):
             if not bool(
                 await to_thread(reader.get_tag, entry.feed_url, "send_by_webhook", True)
             ):
-                link_name = "Posted"
-                if entry.feed.title is not None:
-                    if entry.feed.title.startswith("RT by"):
-                        link_name = "Retweeted"
                 await channel.send(
                     embeds=await entry_to_embed(reader, entry),
                     content=f"[{link_name}]({entry.link})",
@@ -170,7 +174,7 @@ class FeedCog(Cog):
                 if entry.feed.title is not None
                 else "Feed giá rẻ",
                 avatar_url=str(icon_url) if icon_url is not None else None,
-                content=f"[Posted]({entry.link})",
+                content=f"[{link_name}]({entry.link})",
                 embeds=await entry_to_embed(reader, entry),
                 wait=True,
             )
