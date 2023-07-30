@@ -32,8 +32,6 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
         br.insert_before("\\n")
     for p in soup.find_all("p"):
         p.insert_before("\\n")
-    for a in soup.find_all("a"):
-        a.replace_with(f"[{a.get_text(strip=True)}]({a.get('href')})")
     description = soup.get_text(strip=True).replace("\\n", "\n").replace("\n ", "\n")
 
     images = []
