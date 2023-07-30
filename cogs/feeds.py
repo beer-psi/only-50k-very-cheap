@@ -50,7 +50,11 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
     embed0.timestamp = entry.published
     embed0.color = color
     embed0.set_image(url=images[0] if len(images) > 0 else None)
-    embed0.set_author(name=entry.feed.title, url=entry.feed.link, icon_url=icon_url)
+
+    author = entry.author
+    if author is None:
+        author = entry.feed.title
+    embed0.set_author(name=author, url=entry.feed.link, icon_url=icon_url)
     embeds.append(embed0)
 
     for image in images[1:]:
@@ -126,9 +130,13 @@ class FeedCog(Cog):
             if not bool(
                 await to_thread(reader.get_tag, entry.feed_url, "send_by_webhook", True)
             ):
+                link_name = "Posted"
+                if entry.feed.title is not None:
+                    if entry.feed.title.startswith("RT by"):
+                        link_name = "Retweeted"
                 await channel.send(
                     embeds=await entry_to_embed(reader, entry),
-                    content=f"[Posted]({entry.link})",
+                    content=f"[{link_name}]({entry.link})",
                 )
                 await to_thread(reader.set_entry_read, entry, True)
                 continue
