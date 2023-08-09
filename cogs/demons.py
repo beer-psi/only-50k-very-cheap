@@ -58,8 +58,17 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         return await ctx.reply(embed=embed, mention_author=False)
 
     @queue.command("create")
+    @commands.has_permissions(administrator=True)
     async def queue_create(self, ctx: Context):
         await self.queue_loop()
+
+    @queue.command("clear")
+    @commands.has_permissions(administrator=True)
+    async def queue_clear(self, ctx: Context):
+        await self.bot.db.execute("DELETE FROM thread_name_queue")
+        await self.bot.db.commit()
+
+        return await ctx.reply("Cleared queue.", mention_author=False)
 
     @tasks.loop(time=[time(hour=17, minute=0)])
     async def queue_loop(self):
@@ -79,7 +88,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             type=discord.ChannelType.private_thread,
             invitable=False,
         )
-        await thread.send(f"<@&{self.bot.cfg['SEGG_DEMON_ROLE_ID']}> <@&{self.bot.cfg['SEGG_INTERN_ROLE_ID']}>")
+        await thread.send(f"<@{self.bot.cfg['PTR_USER_ID']}> <@&{self.bot.cfg['SEGG_DEMON_ROLE_ID']}> <@&{self.bot.cfg['SEGG_INTERN_ROLE_ID']}>")
 
         if id is not None:
             await self.bot.db.execute("DELETE FROM thread_name_queue WHERE id = ?", (id,))
