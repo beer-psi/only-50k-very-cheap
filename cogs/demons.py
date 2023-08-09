@@ -24,15 +24,18 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         pass
 
     @queue.command("add")
-    async def queue_add(self, ctx: Context, thread_name: str):
+    async def queue_add(self, ctx: Context, *, thread_name: str):
         await self.bot.db.execute("INSERT INTO thread_name_queue (thread_name, owner_id) VALUES (?, ?)", (thread_name, ctx.author.id))
         await self.bot.db.commit()
 
         return ctx.reply("Added to queue.", mention_author=False)
 
     @queue.command("remove")
-    async def queue_remove(self, ctx: Context, thread_name: str):
-        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_name = ? AND owner_id = ?", (thread_name, ctx.author.id)) as cursor:
+    async def queue_remove(self, ctx: Context, *, thread_name_or_id: str):
+        async with self.bot.db.execute(
+            "SELECT * FROM thread_name_queue WHERE (thread_name = :id OR thread_id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
+            {"id": thread_name_or_id, "owner_id": ctx.author.id}
+        ) as cursor:
             if not await cursor.fetchone():
                 return ctx.reply("Thread name not in queue, or you don't have permission to remove it.", mention_author=False)
 
