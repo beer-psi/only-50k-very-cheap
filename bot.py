@@ -75,6 +75,9 @@ async def startup():
         )
 
     async with aiosqlite.connect(BOT_DIR / "database" / "database.sqlite3") as db:
+        with (BOT_DIR / "database" / "schema.sql").open() as f:
+            await db.executescript(f.read())
+
         bot.db = db
 
         try:
