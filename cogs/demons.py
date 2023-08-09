@@ -28,7 +28,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         await self.bot.db.execute("INSERT INTO thread_name_queue (thread_name, owner_id) VALUES (?, ?)", (thread_name, ctx.author.id))
         await self.bot.db.commit()
 
-        return ctx.reply("Added to queue.", mention_author=False)
+        return await ctx.reply("Added to queue.", mention_author=False)
 
     @queue.command("remove")
     async def queue_remove(self, ctx: Context, *, thread_name_or_id: str):
@@ -42,7 +42,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         await self.bot.db.execute("DELETE FROM thread_name_queue WHERE thread_name = ? AND owner_id = ?", (thread_name, ctx.author.id))
         await self.bot.db.commit()
 
-        return ctx.reply("Removed from queue.", mention_author=False)
+        return await ctx.reply("Removed from queue.", mention_author=False)
 
     @queue.command("list")
     async def queue_list(self, ctx: Context):
@@ -53,7 +53,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             description += f"{row[1]} - <@{row[2]}>\n"
 
         embed = discord.Embed(title="Thread names", description=description)
-        return ctx.reply(embed=embed, mention_author=False)
+        return await ctx.reply(embed=embed, mention_author=False)
 
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
     async def queue_loop(self):
