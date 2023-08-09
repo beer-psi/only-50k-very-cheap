@@ -39,7 +39,10 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             if not await cursor.fetchone():
                 return ctx.reply("Thread name not in queue, or you don't have permission to remove it.", mention_author=False)
 
-        await self.bot.db.execute("DELETE FROM thread_name_queue WHERE thread_name = ? AND owner_id = ?", (thread_name, ctx.author.id))
+        await self.bot.db.execute(
+            "DELETE FROM thread_name_queue WHERE (thread_name = :id OR thread_id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
+            {"id": thread_name_or_id, "owner_id": ctx.author.id}
+        )
         await self.bot.db.commit()
 
         return await ctx.reply("Removed from queue.", mention_author=False)
