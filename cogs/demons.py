@@ -81,5 +81,6 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             await self.bot.db.commit()
 
 
-
+async def setup(bot: VeryCheapBot):
+    await bot.add_cog(DemonsCog(bot))
 
