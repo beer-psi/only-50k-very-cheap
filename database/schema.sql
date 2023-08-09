@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS thread_name_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thread_name TEXT NOT NULL,
+    owner_id INTEGER NOT NULL
+);
