@@ -67,8 +67,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         async with self.bot.db.execute("SELECT * FROM thread_name_queue") as cursor:
             row = await cursor.fetchone()
             if row is None:
-                id = None
-                thread_name = "mmb"
+                return
             else:
                 (id, thread_name, _) = row
 
