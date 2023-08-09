@@ -33,14 +33,14 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
     @queue.command("remove")
     async def queue_remove(self, ctx: Context, *, thread_name_or_id: str):
         async with self.bot.db.execute(
-            "SELECT * FROM thread_name_queue WHERE (thread_name = :id OR thread_id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
+            "SELECT * FROM thread_name_queue WHERE (thread_name = :id OR id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
             {"id": thread_name_or_id, "owner_id": ctx.author.id}
         ) as cursor:
             if not await cursor.fetchone():
                 return ctx.reply("Thread name not in queue, or you don't have permission to remove it.", mention_author=False)
 
         await self.bot.db.execute(
-            "DELETE FROM thread_name_queue WHERE (thread_name = :id OR thread_id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
+            "DELETE FROM thread_name_queue WHERE (thread_name = :id OR id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
             {"id": thread_name_or_id, "owner_id": ctx.author.id}
         )
         await self.bot.db.commit()
