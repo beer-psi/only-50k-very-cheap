@@ -1,5 +1,4 @@
 from datetime import time
-from zoneinfo import ZoneInfo
 
 import discord
 from discord.ext import commands, tasks
@@ -58,7 +57,11 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         embed = discord.Embed(title="Thread names", description=description)
         return await ctx.reply(embed=embed, mention_author=False)
 
-    @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
+    @queue.command("create")
+    async def queue_create(self, ctx: Context):
+        await self.queue_loop()
+
+    @tasks.loop(time=[time(hour=17, minute=0)])
     async def queue_loop(self):
         nsfw_channel = self.bot.get_channel(int(self.bot.cfg["NSFW_CHANNEL_ID"]))
         if nsfw_channel is None or not isinstance(nsfw_channel, discord.TextChannel):
