@@ -2,7 +2,6 @@ import re
 
 import discord
 from discord.ext import commands
-from discord.ext.commands import Context
 
 from bot import VeryCheapBot
 
@@ -17,7 +16,7 @@ class MiscCog(commands.Cog, name="Miscellaneous"):
     async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
-        
+
         content = message.content
         if (m := GITHUB_ISSUE_REGEX.search(content)) is not None:
             username = m.group("username")

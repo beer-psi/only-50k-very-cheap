@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from bot import VeryCheapBot
-from scrapers import start_sources, sources
+from scrapers import sources
 
 
 URL_REGEX = re.compile(r"https?:\/\/[^\s<]+[^<.,:;\"'>)|\]\s]")
@@ -44,5 +44,4 @@ class HVNCog(commands.Cog, name="HVN"):
 
 
 async def setup(bot: VeryCheapBot):
-    await start_sources()
     await bot.add_cog(HVNCog(bot))
