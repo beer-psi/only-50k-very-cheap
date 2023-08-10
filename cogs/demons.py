@@ -1,4 +1,5 @@
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import discord
 from discord.ext import commands, tasks
@@ -10,6 +11,8 @@ from bot import VeryCheapBot
 class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
     def __init__(self, bot: VeryCheapBot) -> None:
         self.bot = bot
+
+        self.queue_loop.start()
 
     async def cog_check(self, ctx: Context) -> bool:
         role_ids = [str(role.id) for role in ctx.author.roles]
@@ -71,7 +74,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         return await ctx.reply("Cleared queue.", mention_author=False)
 
-    @tasks.loop(time=[time(hour=17, minute=0)])
+    @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
     async def queue_loop(self):
         nsfw_channel = self.bot.get_channel(int(self.bot.cfg["NSFW_CHANNEL_ID"]))
         if nsfw_channel is None or not isinstance(nsfw_channel, discord.TextChannel):
