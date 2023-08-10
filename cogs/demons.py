@@ -16,6 +16,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         return (
             self.bot.cfg["SEGG_DEMON_ROLE_ID"] in role_ids
             or self.bot.cfg["SEGG_INTERN_ROLE_ID"] in role_ids
+            or (isinstance(ctx.author, discord.Member) and ctx.author.guild_permissions.administrator)
         )
 
     @commands.group(name="queue", invoke_without_command=True)
