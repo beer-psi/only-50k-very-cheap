@@ -91,9 +91,20 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         thread = await nsfw_channel.create_thread(
             name=thread_name,
             type=discord.ChannelType.private_thread,
-            invitable=False,
+            invitable=True,
         )
-        await thread.send(f"<@{self.bot.cfg['SHION_USER_ID']}> <@{self.bot.cfg['PTR_USER_ID']}>")
+        await thread.send(
+            (
+                f"<@{self.bot.cfg['PTR_USER_ID']}> "
+                f"<@&{self.bot.cfg['SEGG_DEMON_ROLE_ID']}> "
+                f"<@&{self.bot.cfg['SEGG_INTERN_ROLE_ID']}>"
+            )
+        )
+
+        await self.bot.http.request(
+            Route("PATCH", "/channels/{thread_id}", thread_id=thread.id),
+            json={"invitable": False},
+        )
 
         if id is not None:
             await self.bot.db.execute("DELETE FROM thread_name_queue WHERE id = ?", (id,))
