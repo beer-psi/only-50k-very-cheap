@@ -22,6 +22,24 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             or self.bot.cfg["SEGG_INTERN_ROLE_ID"] in role_ids
             or (isinstance(ctx.author, discord.Member) and ctx.author.guild_permissions.administrator)
         )
+    
+    @commands.command(name="toggleinvite", aliases=["tinvite"])
+    @commands.has_guild_permissions(manage_messages=True)
+    async def toggleinvite(self, ctx: Context, enabled: bool | None = None):
+        if not isinstance(ctx.channel, discord.Thread):
+            raise commands.errors.CheckFailure(
+                "This command can only be used in threads."
+            )
+
+        new_invitable = not ctx.channel.invitable if enabled is None else enabled
+
+        await self.bot.http.request(
+            Route("PATCH", "/channels/{thread_id}", thread_id=ctx.channel.id),
+            json={"invitable": new_invitable},
+        )
+
+        await ctx.reply(f'Set "Anyone can invite" to {new_invitable} for this thread.')
+        
 
     @commands.group(name="queue", invoke_without_command=True)
     async def queue(self, ctx: Context):
