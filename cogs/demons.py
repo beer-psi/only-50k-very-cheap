@@ -77,6 +77,8 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             self.web_app.on_response_prepare.append(on_response_prepare)
             self.web_app.on_shutdown.append(on_shutdown)
 
+            self.web_app.add_routes(router)
+
             self.web_app["channel"] = self.bot.get_channel(thread_id)
 
             _ = asyncio.ensure_future(
