@@ -17,7 +17,11 @@ router = web.RouteTableDef()
 
 @router.post("/confessions")
 async def confessions(request: web.Request) -> web.Response:
-    channel: discord.abc.MessageableChannel = request.config_dict["channel"]
+    bot: VeryCheapBot = request.config_dict["bot"]
+    thread_id: int = request.config_dict["thread_id"]
+    channel = bot.get_channel(thread_id)
+    if channel is None:
+        channel = await bot.fetch_channel(thread_id)
 
     content_type = request.headers.get("Content-Type")
     if content_type == "application/json":
@@ -74,7 +78,8 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
             self.web_app.add_routes(router)
 
-            self.web_app["channel"] = await self.bot.fetch_channel(thread_id)
+            self.web_app["bot"] = self.bot
+            self.web_app["thread_id"] = thread_id
 
             _ = asyncio.ensure_future(
                 web._run_app(
