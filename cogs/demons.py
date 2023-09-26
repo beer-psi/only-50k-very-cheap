@@ -1,19 +1,98 @@
-from datetime import time
+import asyncio
+from datetime import time, datetime
 from zoneinfo import ZoneInfo
 
 import discord
+from aiohttp import web
 from discord.http import Route
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
+from discord.utils import _from_json, escape_markdown
 
 from bot import VeryCheapBot
+
+
+router = web.RouteTableDef()
+
+
+@router.post("/confessions")
+async def confessions(request: web.Request) -> web.Response:
+    channel: discord.abc.MessageableChannel = request.config_dict["channel"]
+
+    content_type = request.headers.get("Content-Type")
+    if content_type == "application/json":
+        params = await request.json(loads=_from_json)
+    elif content_type in ["application/x-www-form-urlencoded", "multipart/form-data"]:
+        params = await request.post()
+    else:
+        raise web.HTTPBadRequest(reason="Invalid Content-Type")
+    
+    if "timestamp" not in params or "content" not in params or "index" not in params:
+        raise web.HTTPBadRequest(reason="Missing parameters")
+    
+    timestamp = params["timestamp"]
+    content = params["content"]
+    index = params["index"]
+
+    if not isinstance(timestamp, str) or not isinstance(content, str) or not isinstance(index, (str, int)):
+        raise web.HTTPBadRequest(reason="Invalid parameters")
+    
+    try:
+        parsed_timestamp = datetime.fromisoformat(timestamp)
+    except ValueError:
+        raise web.HTTPBadRequest(reason="Invalid timestamp")
+    
+    embed = discord.Embed(
+        title=f"confession #{index}",
+        description=escape_markdown(content),
+        timestamp=parsed_timestamp,
+    )
+
+    asyncio.create_task(channel.send(embed=embed))
+
+    raise web.HTTPNoContent
+
+
+async def on_response_prepare(_: web.Request, response: web.StreamResponse):
+    response.headers.add("x-content-type-options", "nosniff")
+    if response.headers.get("server"):
+        del response.headers["server"]
+
+
+async def on_shutdown(app: web.Application):
+    await app["session"].close()
 
 
 class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
     def __init__(self, bot: VeryCheapBot) -> None:
         self.bot = bot
 
+    async def cog_load(self) -> None:
         self.queue_loop.start()
+
+        if str_thread_id := self.bot.cfg.get("CONFESSIONS_CHANNEL_ID"):
+            thread_id = int(str_thread_id)
+
+            self.web_app = web.Application()
+            self.web_app.on_response_prepare.append(on_response_prepare)
+            self.web_app.on_shutdown.append(on_shutdown)
+
+            self.web_app["channel"] = self.bot.get_channel(thread_id)
+
+            _ = asyncio.ensure_future(
+                web._run_app(
+                    self.web_app,
+                    port=6969,
+                    host="127.0.0.1",
+                )
+            )
+    
+    async def cog_unload(self) -> None:
+        self.queue_loop.stop()
+
+        if hasattr(self, "web_app"):
+            await self.web_app.shutdown()
+            await self.web_app.cleanup()
 
     async def cog_check(self, ctx: Context) -> bool:
         role_ids = [str(role.id) for role in ctx.author.roles]
@@ -75,7 +154,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         description = ""
         for row in rows:
-            description += f"{row[1]} - <@{row[2]}>\n"
+            description += f"`{row[0]}` - {row[1]} - <@{row[2]}>\n"
 
         embed = discord.Embed(title="Thread names", description=description)
         return await ctx.reply(embed=embed, mention_author=False)
