@@ -59,10 +59,6 @@ async def on_response_prepare(_: web.Request, response: web.StreamResponse):
         del response.headers["server"]
 
 
-async def on_shutdown(app: web.Application):
-    await app["session"].close()
-
-
 class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
     def __init__(self, bot: VeryCheapBot) -> None:
         self.bot = bot
@@ -75,7 +71,6 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
             self.web_app = web.Application()
             self.web_app.on_response_prepare.append(on_response_prepare)
-            self.web_app.on_shutdown.append(on_shutdown)
 
             self.web_app.add_routes(router)
 
