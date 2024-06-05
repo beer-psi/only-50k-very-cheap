@@ -105,7 +105,7 @@ class FeedCog(Cog):
         reader = self.reader
         await to_thread(reader.update_feeds, workers=10)
 
-        entries = reversed(await to_thread(reader.get_entries, feed=feed_url, read=False))
+        entries = reversed(list(await to_thread(reader.get_entries, feed=feed_url, read=False)))
         webhooks = {}
         new_post_count = 0
         
