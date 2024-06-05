@@ -245,12 +245,13 @@ class FeedCog(Cog):
     @feed.command()
     @commands.has_permissions(manage_channels=True)
     async def update(self, ctx: Context, feed_url: str | None = None):
-        if feed_url is None:
-            await self.update_feeds()
-            await ctx.reply("Updated all feeds", mention_author=False)
-        else:
-            await self.update_feeds(feed_url)
-            await ctx.reply(f"Updated feed {feed_url}", mention_author=False)
+        async with ctx.typing():
+            if feed_url is None:
+                await self.update_feeds()
+                await ctx.reply("Updated all feeds", mention_author=False)
+            else:
+                await self.update_feeds(feed_url)
+                await ctx.reply(f"Updated feed {feed_url}", mention_author=False)
 
     @feed.command()
     @commands.has_permissions(manage_channels=True)
