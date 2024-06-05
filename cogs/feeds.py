@@ -105,9 +105,10 @@ class FeedCog(Cog):
         reader = self.reader
         await to_thread(reader.update_feeds, workers=10)
 
-        entries = await to_thread(reader.get_entries, feed=feed_url, read=False)
+        entries = reversed(await to_thread(reader.get_entries, feed=feed_url, read=False))
         webhooks = {}
         new_post_count = 0
+        
         for entry in entries:
             new_post_count += 1
             channel_id = str(

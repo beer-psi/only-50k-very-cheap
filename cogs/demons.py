@@ -188,7 +188,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
                 (id, thread_name, _) = row
 
         thread = await nsfw_channel.create_thread(
-            name=thread_name,
+            name=f"[quỷ] {thread_name}",
             type=discord.ChannelType.private_thread,
             invitable=True,
         )
