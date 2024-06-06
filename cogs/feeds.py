@@ -193,7 +193,7 @@ class FeedCog(Cog):
 
             icon_url = await to_thread(reader.get_tag, entry.feed_url, "icon_url", None)
 
-            await webhook.send(
+            msg = await webhook.send(
                 username=entry.feed.title
                 if entry.feed.title is not None
                 else "Feed giá rẻ",
@@ -202,6 +202,10 @@ class FeedCog(Cog):
                 embeds=await entry_to_embed(reader, entry),
                 wait=True,
             )
+
+            if isinstance(channel, discord.TextChannel) and channel.is_news():
+                await msg.publish()
+            
             await to_thread(reader.set_entry_read, entry, True)
 
             if entry.published is not None:
