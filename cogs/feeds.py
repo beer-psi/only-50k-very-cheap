@@ -124,7 +124,7 @@ class FeedCog(Cog):
                 latest_timestamp = datetime.fromisoformat(latest_timestamp)
                 current_latest_by_feed[entry.feed_url] = latest_timestamp
 
-            if entry.published is not None and entry.published < latest_timestamp:
+            if entry.published is not None and entry.published <= latest_timestamp:
                 await to_thread(reader.set_entry_read, entry, True)
                 continue
 
