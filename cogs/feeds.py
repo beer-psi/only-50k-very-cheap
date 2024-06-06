@@ -245,7 +245,7 @@ class FeedCog(Cog):
 
         entries = list(await to_thread(reader.get_entries, feed=url, read=False))
 
-        if entries[0].published is not None:
+        if len(entries) > 0 and entries[0].published is not None:
             await to_thread(reader.set_tag, url, "latest_timestamp", entries[0].published.isoformat())
 
         coros = [to_thread(reader.set_entry_read, entry, True) for entry in entries]
