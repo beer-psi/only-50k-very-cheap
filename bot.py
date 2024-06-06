@@ -52,7 +52,7 @@ async def startup():
         logger.setLevel(logging.DEBUG)
 
         handler = logging.handlers.RotatingFileHandler(
-            filename=f"bot.log",
+            filename="bot.log",
             encoding="utf-8",
             maxBytes=32 * 1024 * 1024,  # 32 MiB
             backupCount=5,  # Rotate through 5 files
@@ -60,7 +60,7 @@ async def startup():
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
-        if file.stem in ["hotreload", "botutils", "__init__"]:
+        if file.stem in ["hotreload", "botutils", "__init__", "hvn", "luna", "misc"]:
             continue
         try:
             await bot.load_extension(cogname)

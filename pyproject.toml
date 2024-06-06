@@ -17,6 +17,8 @@ yarl = "^1.9.2"
 aiosqlite = "^0.19.0"
 reader = "^3.6"
 
+[tool.basedpyright]
+typeCheckingMode = "standard"
 
 [build-system]
 requires = ["poetry-core"]

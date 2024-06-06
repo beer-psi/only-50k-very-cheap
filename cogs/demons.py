@@ -211,5 +211,6 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
 
 async def setup(bot: VeryCheapBot):
-    await bot.add_cog(DemonsCog(bot))
+    if bot.cfg.get("NSFW_CHANNEL_ID"):
+        await bot.add_cog(DemonsCog(bot))
 
