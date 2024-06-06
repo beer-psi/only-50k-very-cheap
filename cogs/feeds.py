@@ -239,7 +239,10 @@ class FeedCog(Cog):
         await to_thread(reader.update_feed, url)
         await to_thread(reader.set_tag, url, "channel_id", str(channel.id))
 
-        entries = await to_thread(reader.get_entries, feed=url, read=False)
+        entries = list(await to_thread(reader.get_entries, feed=url, read=False))
+
+        if entries[0].published is not None:
+            await to_thread(reader.set_tag, url, "latest_timestamp", entries[0].published.isoformat())
 
         coros = [to_thread(reader.set_entry_read, entry, True) for entry in entries]
         await gather(*coros)
