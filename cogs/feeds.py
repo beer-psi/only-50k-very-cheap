@@ -1,7 +1,7 @@
 import logging
 import logging.handlers
 from asyncio import gather, to_thread
-from datetime import time
+from datetime import datetime, time
 from typing import TYPE_CHECKING
 
 import discord
@@ -107,9 +107,26 @@ class FeedCog(Cog):
 
         entries = reversed(list(await to_thread(reader.get_entries, feed=feed_url, read=False)))
         webhooks = {}
+        current_latest_by_feed: dict[str, datetime] = {}
+        new_latest_by_feed: dict[str, datetime] = {}
         new_post_count = 0
         
         for entry in entries:
+            if (latest_timestamp := current_latest_by_feed.get(entry.feed_url)) is None:
+                latest_timestamp = str(
+                    await to_thread(
+                        reader.get_tag,
+                        entry.feed_url,
+                        "latest_timestamp",
+                        "1970-01-01T00:00:00Z",
+                    )
+                )
+                latest_timestamp = datetime.fromisoformat(latest_timestamp)
+                current_latest_by_feed[entry.feed_url] = latest_timestamp
+
+            if entry.published is not None and entry.published < latest_timestamp:
+                continue
+
             new_post_count += 1
             channel_id = str(
                 await to_thread(reader.get_tag, entry.feed_url, "channel_id", "-1")
@@ -185,6 +202,16 @@ class FeedCog(Cog):
                 wait=True,
             )
             await to_thread(reader.set_entry_read, entry, True)
+
+            if entry.published is not None:
+                if (
+                    (new_ts := new_latest_by_feed.get(entry.feed_url)) is None
+                    or entry.published > new_ts
+                ):
+                    new_latest_by_feed[entry.feed_url] = entry.published
+
+        for feed_url, latest in new_latest_by_feed.items():
+            await to_thread(reader.set_tag, feed_url, "latest_timestamp", latest.isoformat())
         await to_thread(self.logger.info, f"Pushed {new_post_count} new posts")
 
     @update_feeds.error
