@@ -36,7 +36,12 @@ async def entry_to_embed(reader: Reader, entry: Entry) -> list[discord.Embed]:
         content = a.get_text(strip=True)
         if not content.startswith("#"):
             a.replace_with(a.get("href"))
-    description = soup.get_text(strip=True).replace("\\n", "\n").replace("\n ", "\n").replace("nitter.beerpsi.tech", "twitter.com")
+    description = (
+        soup.get_text(strip=True)
+        .replace("\\n", "\n")
+        .replace("\n ", "\n")
+        .replace("nitter.beerpsi.tech", "twitter.com")
+    )
 
     images = []
     for tag in soup.select("video, img"):
@@ -105,12 +110,14 @@ class FeedCog(Cog):
         reader = self.reader
         await to_thread(reader.update_feeds, workers=10)
 
-        entries = reversed(list(await to_thread(reader.get_entries, feed=feed_url, read=False)))
+        entries = reversed(
+            list(await to_thread(reader.get_entries, feed=feed_url, read=False))
+        )
         webhooks = {}
         current_latest_by_feed: dict[str, datetime] = {}
         new_latest_by_feed: dict[str, datetime] = {}
         new_post_count = 0
-        
+
         for entry in entries:
             if (latest_timestamp := current_latest_by_feed.get(entry.feed_url)) is None:
                 latest_timestamp = str(
@@ -141,7 +148,7 @@ class FeedCog(Cog):
 
             channel_id = int(channel_id)
             channel = self.bot.get_channel(channel_id)
-            
+
             link_name = "Posted"
             link = (entry.link or "").replace("nitter.beerpsi.tech", "twitter.com")
             if entry.title is not None:
@@ -205,18 +212,19 @@ class FeedCog(Cog):
 
             if isinstance(channel, discord.TextChannel) and channel.is_news():
                 await msg.publish()
-            
+
             await to_thread(reader.set_entry_read, entry, True)
 
             if entry.published is not None:
                 if (
-                    (new_ts := new_latest_by_feed.get(entry.feed_url)) is None
-                    or entry.published > new_ts
-                ):
+                    new_ts := new_latest_by_feed.get(entry.feed_url)
+                ) is None or entry.published > new_ts:
                     new_latest_by_feed[entry.feed_url] = entry.published
 
         for feed_url, latest in new_latest_by_feed.items():
-            await to_thread(reader.set_tag, feed_url, "latest_timestamp", latest.isoformat())
+            await to_thread(
+                reader.set_tag, feed_url, "latest_timestamp", latest.isoformat()
+            )
         await to_thread(self.logger.info, f"Pushed {new_post_count} new posts")
 
     @update_feeds.error
@@ -246,7 +254,12 @@ class FeedCog(Cog):
         entries = list(await to_thread(reader.get_entries, feed=url, read=False))
 
         if len(entries) > 0 and entries[0].published is not None:
-            await to_thread(reader.set_tag, url, "latest_timestamp", entries[0].published.isoformat())
+            await to_thread(
+                reader.set_tag,
+                url,
+                "latest_timestamp",
+                entries[0].published.isoformat(),
+            )
 
         coros = [to_thread(reader.set_entry_read, entry, True) for entry in entries]
         await gather(*coros)

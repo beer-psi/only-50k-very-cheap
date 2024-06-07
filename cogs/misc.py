@@ -5,7 +5,9 @@ from discord.ext import commands
 
 from bot import VeryCheapBot
 
-GITHUB_ISSUE_REGEX = re.compile(r"(?P<username>[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})/(?P<repo>[a-zA-Z0-9-_]{0,100})#(?P<issue>\d+)")
+GITHUB_ISSUE_REGEX = re.compile(
+    r"(?P<username>[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38})/(?P<repo>[a-zA-Z0-9-_]{0,100})#(?P<issue>\d+)"
+)
 
 
 class MiscCog(commands.Cog, name="Miscellaneous"):
@@ -22,7 +24,9 @@ class MiscCog(commands.Cog, name="Miscellaneous"):
             username = m.group("username")
             repo = m.group("repo")
             issue = m.group("issue")
-            await message.channel.send(f"https://github.com/{username}/{repo}/issues/{issue}")
+            await message.channel.send(
+                f"https://github.com/{username}/{repo}/issues/{issue}"
+            )
 
 
 async def setup(bot: VeryCheapBot):

@@ -30,22 +30,26 @@ async def confessions(request: web.Request) -> web.Response:
         params = await request.post()
     else:
         raise web.HTTPBadRequest(reason="Invalid Content-Type")
-    
+
     if "timestamp" not in params or "content" not in params or "index" not in params:
         raise web.HTTPBadRequest(reason="Missing parameters")
-    
+
     timestamp = params["timestamp"]
     content = params["content"]
     index = params["index"]
 
-    if not isinstance(timestamp, str) or not isinstance(content, str) or not isinstance(index, (str, int)):
+    if (
+        not isinstance(timestamp, str)
+        or not isinstance(content, str)
+        or not isinstance(index, (str, int))
+    ):
         raise web.HTTPBadRequest(reason="Invalid parameters")
-    
+
     try:
         parsed_timestamp = datetime.fromisoformat(timestamp)
     except ValueError:
         raise web.HTTPBadRequest(reason="Invalid timestamp")
-    
+
     embed = discord.Embed(
         title=f"confession #{index}",
         description=escape_markdown(content),
@@ -88,7 +92,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
                     host="127.0.0.1",
                 )
             )
-    
+
     async def cog_unload(self) -> None:
         self.queue_loop.stop()
 
@@ -101,9 +105,12 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         return (
             self.bot.cfg["SEGG_DEMON_ROLE_ID"] in role_ids
             or self.bot.cfg["SEGG_INTERN_ROLE_ID"] in role_ids
-            or (isinstance(ctx.author, discord.Member) and ctx.author.guild_permissions.administrator)
+            or (
+                isinstance(ctx.author, discord.Member)
+                and ctx.author.guild_permissions.administrator
+            )
         )
-    
+
     @commands.command(name="toggleinvite", aliases=["tinvite"])
     @commands.has_guild_permissions(manage_messages=True)
     async def toggleinvite(self, ctx: Context, enabled: bool | None = None):
@@ -120,7 +127,6 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         )
 
         await ctx.reply(f'Set "Anyone can invite" to {new_invitable} for this thread.')
-        
 
     @commands.group(name="queue", invoke_without_command=True)
     async def queue(self, ctx: Context):
@@ -128,7 +134,10 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
     @queue.command("add")
     async def queue_add(self, ctx: Context, *, thread_name: str):
-        await self.bot.db.execute("INSERT INTO thread_name_queue (thread_name, owner_id) VALUES (?, ?)", (thread_name, ctx.author.id))
+        await self.bot.db.execute(
+            "INSERT INTO thread_name_queue (thread_name, owner_id) VALUES (?, ?)",
+            (thread_name, ctx.author.id),
+        )
         await self.bot.db.commit()
 
         return await ctx.reply("Added to queue.", mention_author=False)
@@ -137,14 +146,17 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
     async def queue_remove(self, ctx: Context, *, thread_name_or_id: str):
         async with self.bot.db.execute(
             "SELECT * FROM thread_name_queue WHERE (thread_name = :id OR id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
-            {"id": thread_name_or_id, "owner_id": ctx.author.id}
+            {"id": thread_name_or_id, "owner_id": ctx.author.id},
         ) as cursor:
             if not await cursor.fetchone():
-                return ctx.reply("Thread name not in queue, or you don't have permission to remove it.", mention_author=False)
+                return ctx.reply(
+                    "Thread name not in queue, or you don't have permission to remove it.",
+                    mention_author=False,
+                )
 
         await self.bot.db.execute(
             "DELETE FROM thread_name_queue WHERE (thread_name = :id OR id = CAST(:id AS INTEGER)) AND owner_id = :owner_id",
-            {"id": thread_name_or_id, "owner_id": ctx.author.id}
+            {"id": thread_name_or_id, "owner_id": ctx.author.id},
         )
         await self.bot.db.commit()
 
@@ -206,11 +218,12 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         )
 
         if id is not None:
-            await self.bot.db.execute("DELETE FROM thread_name_queue WHERE id = ?", (id,))
+            await self.bot.db.execute(
+                "DELETE FROM thread_name_queue WHERE id = ?", (id,)
+            )
             await self.bot.db.commit()
 
 
 async def setup(bot: VeryCheapBot):
     if bot.cfg.get("NSFW_CHANNEL_ID"):
         await bot.add_cog(DemonsCog(bot))
-
