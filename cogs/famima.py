@@ -259,6 +259,10 @@ class FamimaGachaCog(commands.Cog):
             resp = await session.post(
                 f"{api_server}/services/app/PlayerTickets/AutoGenTicketGame",
                 json={"memberCode": member_code},
+                headers={
+                    "content-type": "application/json; charset=utf-8",
+                    "user-agent": "Dart/2.18 (dart:io)"
+                }
             )
             autogen_data = await resp.json()
 
