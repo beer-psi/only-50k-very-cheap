@@ -239,7 +239,20 @@ class FamimaGachaCog(commands.Cog):
                 "Authorization": f"Bearer {auth_data['result']['accessToken']}"
             })
 
-            resp = await session.get(f"{api_server}/services/app/GameInfos/GetGamePlayInfo?memberCode={member_code}&gameCode={game_code}&MaxResultCount=20&SkipCount=0")
+            resp = await session.post(
+                f"{api_server}/services/app/PlayerTickets/AutoGenTicketGame",
+                json={"memberCode": member_code}
+            )
+            autogen_data = await resp.json()
+
+            if not autogen_data["success"]:
+                details = escape_markdown(autogen_data["error"]["details"] or autogen_data["error"]["message"])
+                
+                raise FamimaError("Could not generate roll ticket", details)
+
+            resp = await session.get(
+                f"{api_server}/services/app/GameInfos/GetGamePlayInfo?memberCode={member_code}&gameCode={game_code}&MaxResultCount=20&SkipCount=0"
+            )
             game_play_data = await resp.json()
 
             if not game_play_data["success"]:
