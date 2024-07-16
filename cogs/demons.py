@@ -101,10 +101,11 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             await self.web_app.cleanup()
 
     async def cog_check(self, ctx: Context) -> bool:
+        user_id = ctx.author.id
         role_ids = [str(role.id) for role in ctx.author.roles]
         return (
-            self.bot.cfg["SEGG_DEMON_ROLE_ID"] in role_ids
-            or self.bot.cfg["SEGG_INTERN_ROLE_ID"] in role_ids
+            str(user_id) in self.bot.cfg["SOCIETY_USER_IDS"]
+            or any(x in self.bot.cfg["SOCIETY_ROLE_IDS"] for x in role_ids)
             or (
                 isinstance(ctx.author, discord.Member)
                 and ctx.author.guild_permissions.administrator
