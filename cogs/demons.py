@@ -181,6 +181,24 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         embed = discord.Embed(title="Thread names", description=description)
         return await ctx.reply(embed=embed, mention_author=False)
+    
+    @queue.command("invited")
+    async def queue_invited(self, ctx: Context):
+        description = ""
+
+        for user in self.bot.cfg["SOCIETY_USER_IDS"].split(" "):
+            description += f"<@{user}> "
+        
+        for role in self.bot.cfg["SOCIETY_ROLE_IDS"].split(" "):
+            description += f"<@&{role}> "
+        
+        return await ctx.reply(
+            embed=discord.Embed(
+                title="Invited people",
+                description=description,
+            ),
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     @queue.command("create")
     @commands.has_permissions(administrator=True)
