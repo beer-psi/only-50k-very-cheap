@@ -89,7 +89,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
                 web._run_app(
                     self.web_app,
                     port=6969,
-                    host="127.0.0.1",
+                    host="0.0.0.0",
                 )
             )
 
@@ -134,6 +134,14 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
     @queue.command("add")
     async def queue_add(self, ctx: Context, *, thread_name: str):
+        if len(thread_name) > 100:
+            embed = discord.Embed(
+                color=discord.Color.red(),
+                title="Error",
+                description="Thread names must not exceed 100 characters.",
+            )
+            return await ctx.reply(embed=embed, mention_author=False)
+
         await self.bot.db.execute(
             "INSERT INTO thread_name_queue (thread_name, owner_id) VALUES (?, ?)",
             (thread_name, ctx.author.id),
@@ -204,14 +212,16 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             type=discord.ChannelType.private_thread,
             invitable=True,
         )
-        await thread.send(
-            (
-                f"<@{self.bot.cfg['PTR_USER_ID']}> "
-                f"<@&{self.bot.cfg['SEGG_DEMON_ROLE_ID']}> "
-                f"<@&{self.bot.cfg['SEGG_INTERN_ROLE_ID']}>"
-            )
-        )
+        message = ""
 
+        for user in self.bot.cfg["SOCIETY_USER_IDS"].split(" "):
+            message += f"<@{user}> "
+        
+        for role in self.bot.cfg["SOCIETY_ROLE_IDS"].split(" "):
+            message += f"<@&{role}> "
+            
+        
+        await thread.send(message)
         await self.bot.http.request(
             Route("PATCH", "/channels/{thread_id}", thread_id=thread.id),
             json={"invitable": False},
