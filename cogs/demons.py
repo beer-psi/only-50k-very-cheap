@@ -270,7 +270,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         if id is not None:
             await self.bot.db.execute(
-                "UPDATE thread_name_queue SET thread_id = ? WHERE id = ?", (thread.id, id,)
+                "UPDATE thread_name_queue SET thread_id = ?, created = CURRENT_TIMESTAMP WHERE id = ?", (thread.id, id,)
             )
             await self.bot.db.commit()
 
