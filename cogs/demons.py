@@ -263,7 +263,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         for role in self.bot.cfg["SOCIETY_ROLE_IDS"].split(" "):
             message += f"<@&{role}> "
 
-        thread = await thread.send(message)
+        await thread.send(message)
         await self.bot.http.request(
             Route("PATCH", "/channels/{thread_id}", thread_id=thread.id),
             json={"invitable": False},
