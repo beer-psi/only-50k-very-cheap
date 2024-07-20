@@ -9,4 +9,8 @@ CREATE TABLE IF NOT EXISTS famima_creds (
     member_code TEXT UNIQUE NOT NULL,
     password TEXT UNIQUE NOT NULL,
     auto_roll_channel_id BIGINT DEFAULT NULL
-)
+);
+
+ALTER TABLE thread_name_queue ADD COLUMN thread_id BIGINT DEFAULT NULL;
+ALTER TABLE thread_name_queue ADD COLUMN created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE thread_name_queue ADD COLUMN deleted BOOLEAN DEFAULT FALSE;
