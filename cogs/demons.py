@@ -227,9 +227,9 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
             for stale_channel in stale_channels:
                 (id, thread_name, _, thread_id, created, _) = stale_channel
-                created_time = datetime.strptime(created, "%Y-%m-%d %H:%M:%S").astimezone(UTC)
+                created_time = datetime.strptime(created, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
 
-                if datetime.now(UTC) - created_time >= timedelta(days=3):
+                if datetime.now(UTC) - created_time >= timedelta(days=2):
                     channel = self.bot.get_channel(thread_id)
 
                     if channel is not None:
