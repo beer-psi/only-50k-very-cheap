@@ -1,9 +1,10 @@
 import asyncio
-from datetime import time, datetime
+from datetime import UTC, time, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import discord
 from aiohttp import web
+from discord.activity import Game
 from discord.http import Route
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
@@ -173,7 +174,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
     @queue.command("list")
     async def queue_list(self, ctx: Context):
-        rows = await self.bot.db.execute_fetchall("SELECT * FROM thread_name_queue")
+        rows = await self.bot.db.execute_fetchall("SELECT * FROM thread_name_queue WHERE thread_id = NULL AND deleted = FALSE")
 
         description = ""
         for row in rows:
@@ -181,17 +182,17 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         embed = discord.Embed(title="Thread names", description=description)
         return await ctx.reply(embed=embed, mention_author=False)
-    
+
     @queue.command("invited")
     async def queue_invited(self, ctx: Context):
         description = ""
 
         for user in self.bot.cfg["SOCIETY_USER_IDS"].split(" "):
             description += f"<@{user}> "
-        
+
         for role in self.bot.cfg["SOCIETY_ROLE_IDS"].split(" "):
             description += f"<@&{role}> "
-        
+
         return await ctx.reply(
             embed=discord.Embed(
                 title="Invited people",
@@ -213,18 +214,40 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         return await ctx.reply("Cleared queue.", mention_author=False)
 
+    @queue.command("nuke")
+    @commands.has_permissions(manage_threads=True)
+    async def queue_nuke(self, ctx: Context):
+        await ctx.channel.delete()
+
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
     async def queue_loop(self):
+        # Clean up old threads
+        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id != NULL AND deleted = FALSE") as cursor:
+            stale_channels = await cursor.fetchall()
+
+            for stale_channel in stale_channels:
+                (id, thread_name, _, thread_id, created, _) = stale_channel
+
+                if datetime.now(UTC) - created >= timedelta(days=2):
+                    channel = self.bot.get_channel(thread_id)
+
+                    if channel is not None:
+                        await channel.delete()
+                    
+                    await self.bot.db.execute("UPDATE thread_name_queue SET deleted = TRUE WHERE id = ?", (id,))
+            
+            await self.bot.db.commit()
+
         nsfw_channel = self.bot.get_channel(int(self.bot.cfg["NSFW_CHANNEL_ID"]))
         if nsfw_channel is None or not isinstance(nsfw_channel, discord.TextChannel):
             return
 
-        async with self.bot.db.execute("SELECT * FROM thread_name_queue") as cursor:
+        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id = NULL AND deleted = FALSE") as cursor:
             row = await cursor.fetchone()
             if row is None:
                 return
             else:
-                (id, thread_name, _) = row
+                (id, thread_name, _, _, _, _) = row
 
         thread = await nsfw_channel.create_thread(
             name=f"[quỷ] {thread_name}",
@@ -235,12 +258,11 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         for user in self.bot.cfg["SOCIETY_USER_IDS"].split(" "):
             message += f"<@{user}> "
-        
+
         for role in self.bot.cfg["SOCIETY_ROLE_IDS"].split(" "):
             message += f"<@&{role}> "
-            
-        
-        await thread.send(message)
+
+        thread = await thread.send(message)
         await self.bot.http.request(
             Route("PATCH", "/channels/{thread_id}", thread_id=thread.id),
             json={"invitable": False},
@@ -248,9 +270,23 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         if id is not None:
             await self.bot.db.execute(
-                "DELETE FROM thread_name_queue WHERE id = ?", (id,)
+                "UPDATE thread_name_queue SET thread_id = ? WHERE id = ?", (thread.id, id,)
             )
             await self.bot.db.commit()
+
+    # @commands.Cog.listener()
+    # async def on_presence_update(self, before: discord.Member, after: discord.Member):
+    #     if (
+    #         (activity := after.activity) is None
+    #         or not isinstance(activity, Game)
+    #         or activity.start is None
+    #     ):
+    #         return
+
+    #     if activity.name == "League of Legends" and datetime.now(
+    #         UTC
+    #     ) - activity.start >= timedelta(minutes=30):
+    #         await after.guild.ban(after, reason="Playing League of Legends")
 
 
 async def setup(bot: VeryCheapBot):
