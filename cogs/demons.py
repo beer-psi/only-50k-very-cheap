@@ -174,7 +174,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
     @queue.command("list")
     async def queue_list(self, ctx: Context):
-        rows = await self.bot.db.execute_fetchall("SELECT * FROM thread_name_queue WHERE thread_id = NULL AND deleted = FALSE")
+        rows = await self.bot.db.execute_fetchall("SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE")
 
         description = ""
         for row in rows:
@@ -222,7 +222,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
     async def queue_loop(self):
         # Clean up old threads
-        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id != NULL AND deleted = FALSE") as cursor:
+        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id IS NOT NULL AND deleted = FALSE") as cursor:
             stale_channels = await cursor.fetchall()
 
             for stale_channel in stale_channels:
@@ -242,7 +242,7 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         if nsfw_channel is None or not isinstance(nsfw_channel, discord.TextChannel):
             return
 
-        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id = NULL AND deleted = FALSE") as cursor:
+        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE") as cursor:
             row = await cursor.fetchone()
             if row is None:
                 return
