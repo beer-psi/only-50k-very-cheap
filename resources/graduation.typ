@@ -5,6 +5,7 @@
 )
 #show par: set block(spacing: 3em)
 #set par(justify: true, leading: 1em)
+#set page(width: 21cm, height: 21cm)
 
 #align(center)[#text(size: 14pt)[*Important Notice*]]
 
