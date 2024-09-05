@@ -1,8 +1,11 @@
 import asyncio
+import tempfile
 from datetime import UTC, time, datetime, timedelta
 from zoneinfo import ZoneInfo
+from pathlib import Path
 
 import discord
+import typst
 from aiohttp import web
 from discord.activity import Game
 from discord.http import Route
@@ -11,6 +14,12 @@ from discord.ext.commands import Context
 from discord.utils import _from_json, escape_markdown
 
 from bot import VeryCheapBot
+
+GRADUATION_TEMPLATE = (
+    (Path(__file__).parent.parent / "resources" / "graduation.typ")
+    .open(encoding="utf-8")
+    .read()
+)
 
 
 router = web.RouteTableDef()
@@ -129,6 +138,35 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         )
 
         await ctx.reply(f'Set "Anyone can invite" to {new_invitable} for this thread.')
+    
+    @commands.command(name="graduation")
+    async def graduation(self, ctx: Context, vtuber_name: str, company_name: str):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            inp = Path(tmpdir) / "graduation.typ"
+            out = Path(tmpdir) / "graduation.png"
+
+            with inp.open("w", encoding="utf-8") as f:
+                f.write(
+                    GRADUATION_TEMPLATE
+                    .replace("%%NAME%%", vtuber_name)
+                    .replace("%%COMPANY_NAME%%", company_name)  
+                )
+
+            await asyncio.to_thread(
+                typst.compile,
+                str(inp),
+                output=str(out),
+                format="png",
+                ppi=144.0
+            )
+
+            discord_file = discord.File(out, filename="graduation.png")
+
+            await ctx.reply(
+                file=discord_file,
+                mention_author=False,
+            )
+            
 
     @commands.group(name="queue", invoke_without_command=True)
     async def queue(self, ctx: Context):
