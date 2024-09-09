@@ -13,7 +13,7 @@ Thank you for your continued support of %%COMPANY_NAME%%.
 
 We hereby announce that starting today, our beloved entertainer %%NAME%% will be graduating from %%COMPANY_NAME%%.
 
-We wish to extend our deepest apologies to all the fans and collaborators for this sudden announcement, as well as our heartfelt gratitude and thanks to everyone who supported %%NAME%% activities for the past four years.
+We wish to extend our deepest apologies to all the fans and collaborators for this sudden announcement, as well as our heartfelt gratitude and thanks to everyone who supported %%NAME%%'s activities for the past four years.
 
 We as a company are saddened by %%NAME%%'s decision to leave, but after much deliberation between both parties, we have decided to honor %%NAME%%'s wishes.
 
