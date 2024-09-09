@@ -7,7 +7,6 @@ from pathlib import Path
 import discord
 import typst
 from aiohttp import web
-from discord.activity import Game
 from discord.http import Route
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
@@ -15,12 +14,11 @@ from discord.utils import _from_json, escape_markdown
 
 from bot import VeryCheapBot
 
-GRADUATION_TEMPLATE = (
-    (Path(__file__).parent.parent / "resources" / "graduation.typ")
-    .open(encoding="utf-8")
-    .read()
-)
-
+RESOURCE_DIR = Path(__file__).parent.parent / "resources"
+VTUBER_TEMPLATES = {
+    "termination": RESOURCE_DIR / "termination.typ",
+    "graduation": RESOURCE_DIR / "graduation.typ",
+}
 
 router = web.RouteTableDef()
 
@@ -139,19 +137,47 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
         await ctx.reply(f'Set "Anyone can invite" to {new_invitable} for this thread.')
     
-    @commands.command(name="graduation")
+    @commands.command(name="termination")
+    async def termination(self, ctx: Context, vtuber_name: str, company_name: str):
+        await self._vtuber_copypasta(
+            ctx,
+            vtuber_name,
+            company_name
+        )
+    
+    @commands.command("graduation")
     async def graduation(self, ctx: Context, vtuber_name: str, company_name: str):
+        await self._vtuber_copypasta(
+            ctx,
+            vtuber_name,
+            company_name
+        )
+    
+    async def _vtuber_copypasta(
+        self,
+        ctx: Context,
+        vtuber_name: str,
+        company_name: str
+    ):
+        if ctx.command is None:
+            raise TypeError
+
         with tempfile.TemporaryDirectory() as tmpdir:
-            inp = Path(tmpdir) / "graduation.typ"
-            out = Path(tmpdir) / "graduation.png"
+            inp = Path(tmpdir) / f"{ctx.command.name}.typ"
+            out = Path(tmpdir) / f"{ctx.command.name}.png"
 
-            with inp.open("w", encoding="utf-8") as f:
+            with (
+                VTUBER_TEMPLATES[ctx.command.name].open("r", encoding="utf-8") as ft,
+                inp.open("w", encoding="utf-8") as f
+            ):
+                template = ft.read()
+
                 f.write(
-                    GRADUATION_TEMPLATE
+                    template
                     .replace("%%NAME%%", vtuber_name)
-                    .replace("%%COMPANY_NAME%%", company_name)  
+                    .replace("%%COMPANY_NAME%%", company_name)
                 )
-
+            
             await asyncio.to_thread(
                 typst.compile,
                 str(inp),
@@ -160,12 +186,10 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
                 ppi=144.0
             )
 
-            discord_file = discord.File(out, filename="graduation.png")
+            discord_file = discord.File(out, filename=f"{ctx.command.name}.png")
 
-            await ctx.reply(
-                file=discord_file,
-                mention_author=False,
-            )
+            await ctx.reply(file=discord_file, mention_author=False)
+
             
 
     @commands.group(name="queue", invoke_without_command=True)

@@ -7,23 +7,16 @@
 #set par(justify: true, leading: 1em)
 #set page(width: 21cm, height: 21cm, margin: (top: 1.5cm, bottom: 1.5cm))
 
-#align(center)[#text(size: 15pt)[*Important Notice*]]
+Thank you for your continued support of %%COMPANY_NAME%%.
 
-Dear Fans and Supporters,
+We hereby announce that starting today, our beloved entertainer %%NAME%% will be graduating from %%COMPANY_NAME%%.
 
-We regret to inform you that we have decided to part ways with our beloved
-entertainer, %%NAME%%, effective immediately. This decision was made after careful
-consideration of the recent events that have come to light, involving %%NAME%%'s
-violation of our company policy and code of conduct.
+We wish to extend our deepest apologies to all the fans and collaborators for this sudden announcement, as well as our heartfelt gratitude and thanks to everyone who supported %%NAME%% activities for the past four years.
 
-We want to express our gratitude to %%NAME%% for their amazing contributions to our
-entertainment industry over the years. We also want to thank you, the fans, for
-your unwavering support and love for %%NAME%% and our company. We hope that you
-will continue to enjoy our other talented entertainers and their works.
+We as a company are saddened by her decision to leave, but after much deliberation between both parties, we have decided to honor %%NAME%%'s wishes.
 
-We wish %%NAME%% all the best in their future endeavors and hope that they will learn
-from this experience and grow as a person and a professional. We also ask for your
-understanding and respect for %%NAME%%'s privacy during this difficult time.
+In addition, %%NAME%%'s channel membership and members-only content will continue to be available for three months after %%NAME%%'s graduation.
 
-Sincerely, \ 
+We hope you continue to give %%NAME%% activities your full and unwavering support in this remaining short time until the day of graduation.
+
 %%COMPANY_NAME%%
