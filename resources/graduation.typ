@@ -19,6 +19,6 @@ We as a company are saddened by %%NAME%%'s decision to leave, but after much del
 
 In addition, %%NAME%%'s channel membership and members-only content will continue to be available for three months after %%NAME%%'s graduation.
 
-We hope you continue to give %%NAME%% activities your full and unwavering support in this remaining short time until the day of graduation.
+We hope you continue to give %%NAME%%'s activities your full and unwavering support in this remaining short time until the day of graduation.
 
 %%COMPANY_NAME%%
