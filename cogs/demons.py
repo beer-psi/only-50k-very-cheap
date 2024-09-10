@@ -190,7 +190,21 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
 
             await ctx.reply(file=discord_file, mention_author=False)
 
-            
+    @commands.command(name="everyone") 
+    async def everyone(self, ctx: Context):
+        await ctx.reply(
+            "@everyone",
+            mention_author=False,
+            allowed_mentions=discord.AllowedMentions.all()
+        )
+    
+    @commands.command(name="here") 
+    async def here(self, ctx: Context):
+        await ctx.reply(
+            "@here",
+            mention_author=False,
+            allowed_mentions=discord.AllowedMentions.all()
+        )
 
     @commands.group(name="queue", invoke_without_command=True)
     async def queue(self, ctx: Context):
