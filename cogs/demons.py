@@ -153,6 +153,19 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
             company_name
         )
     
+    @commands.command("capology")
+    async def cimpher_apology(self, ctx: Context, target: str, mistake: str):
+        await ctx.reply(
+            f"""chẹp, sorry mn vì noti nổ tùm lum cả tối nay 😇
+
+cá nhân mình và {escape_markdown(target)} vừa xảy ra một số lùm xùm có lẽ là không đáng có dẫn đến ẩu đả và cãi nhau rất nhiều, nhưng sau khi chửi nhau mỏi miệng thì cái gì cũng phải đến hồi kết và lựa chọn của 2 đứa là post bài hòa giải và ngừng dây dưa đến nhau 
+
+về bản thân mình thì mình xin nhận lỗi vì đã {escape_markdown(mistake)}, cái này mình thì nghiêm túc xin lỗi và nhận hoàn toàn trách nhiệm về mình, không mong đc bỏ qua nhưng sẽ rút kinh nghiệm cho sau này
+
+và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì đến các mqh cx như đời sống của mình vì đây hoàn toàn là chuyện cá nhân, cảm ơn đã đọc""",
+            mention_author=False
+        )
+    
     async def _vtuber_copypasta(
         self,
         ctx: Context,
