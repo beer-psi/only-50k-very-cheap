@@ -81,7 +81,7 @@ class FeedCog(Cog):
     def __init__(self, bot: "VeryCheapBot") -> None:
         self.bot = bot
         self.logger = logging.getLogger("cogs.feeds")
-        self.reader: Reader = make_reader(str(BOT_DIR / "database" / "reader.sqlite3"))
+        self.reader: Reader = make_reader(str(BOT_DIR / "data" / "reader.sqlite3"))
 
         self.logger.debug("Starting update_feeds task")
         self.logger.debug(self.update_feeds.start())
