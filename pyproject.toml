@@ -22,4 +22,5 @@ typeCheckingMode = "standard"
 [dependency-groups]
 dev = [
     "basedpyright>=1.28.0",
+    "ruff>=0.9.8",
 ]

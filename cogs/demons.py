@@ -136,23 +136,15 @@ class DemonsCog(commands.Cog, name="Demons", command_attrs=dict(hidden=True)):
         )
 
         await ctx.reply(f'Set "Anyone can invite" to {new_invitable} for this thread.')
-    
+
     @commands.command(name="termination")
     async def termination(self, ctx: Context, vtuber_name: str, company_name: str):
-        await self._vtuber_copypasta(
-            ctx,
-            vtuber_name,
-            company_name
-        )
-    
+        await self._vtuber_copypasta(ctx, vtuber_name, company_name)
+
     @commands.command("graduation")
     async def graduation(self, ctx: Context, vtuber_name: str, company_name: str):
-        await self._vtuber_copypasta(
-            ctx,
-            vtuber_name,
-            company_name
-        )
-    
+        await self._vtuber_copypasta(ctx, vtuber_name, company_name)
+
     @commands.command("capology")
     async def cimpher_apology(self, ctx: Context, target: str, mistake: str):
         await ctx.reply(
@@ -163,14 +155,11 @@ cá nhân mình và {escape_markdown(target)} vừa xảy ra một số lùm xù
 về bản thân mình thì mình xin nhận lỗi vì đã {escape_markdown(mistake)}, cái này mình thì nghiêm túc xin lỗi và nhận hoàn toàn trách nhiệm về mình, không mong đc bỏ qua nhưng sẽ rút kinh nghiệm cho sau này
 
 và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì đến các mqh cx như đời sống của mình vì đây hoàn toàn là chuyện cá nhân, cảm ơn đã đọc""",
-            mention_author=False
+            mention_author=False,
         )
-    
+
     async def _vtuber_copypasta(
-        self,
-        ctx: Context,
-        vtuber_name: str,
-        company_name: str
+        self, ctx: Context, vtuber_name: str, company_name: str
     ):
         if ctx.command is None:
             raise TypeError
@@ -181,42 +170,38 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
             with (
                 VTUBER_TEMPLATES[ctx.command.name].open("r", encoding="utf-8") as ft,
-                inp.open("w", encoding="utf-8") as f
+                inp.open("w", encoding="utf-8") as f,
             ):
                 template = ft.read()
 
                 f.write(
-                    template
-                    .replace("%%NAME%%", vtuber_name)
-                    .replace("%%COMPANY_NAME%%", company_name)
+                    template.replace("%%NAME%%", vtuber_name).replace(
+                        "%%COMPANY_NAME%%", company_name
+                    )
                 )
-            
+
             await asyncio.to_thread(
-                typst.compile,
-                str(inp),
-                output=str(out),
-                format="png",
-                ppi=144.0
+                typst.compile, str(inp), output=str(out), format="png", ppi=144.0
             )
 
             discord_file = discord.File(out, filename=f"{ctx.command.name}.png")
 
             await ctx.reply(file=discord_file, mention_author=False)
 
-    @commands.command(name="everyone") 
+    @commands.command(name="everyone")
     async def everyone(self, ctx: Context):
         await ctx.reply(
             "@everyone",
             mention_author=False,
-            allowed_mentions=discord.AllowedMentions.all()
+            allowed_mentions=discord.AllowedMentions.all(),
         )
-    
-    @commands.command(name="here") 
+
+    @commands.command(name="here")
     async def here(self, ctx: Context):
         await ctx.reply(
             "@here",
             mention_author=False,
-            allowed_mentions=discord.AllowedMentions.all()
+            allowed_mentions=discord.AllowedMentions.all(),
         )
 
     @commands.group(name="queue", invoke_without_command=True)
@@ -263,7 +248,9 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
     @queue.command("list")
     async def queue_list(self, ctx: Context):
-        rows = await self.bot.db.execute_fetchall("SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE")
+        rows = await self.bot.db.execute_fetchall(
+            "SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE"
+        )
 
         description = ""
         for row in rows:
@@ -293,7 +280,7 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
     @queue.command("create")
     @commands.has_permissions(administrator=True)
     async def queue_create(self, ctx: Context):
-        await self.queue_loop()
+        await self.queue_loop(cleanup_old_threads=False)
 
     @queue.command("clear")
     @commands.has_permissions(administrator=True)
@@ -309,30 +296,40 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
         await ctx.channel.delete()
 
     @tasks.loop(time=[time(hour=0, minute=0, tzinfo=ZoneInfo("Asia/Ho_Chi_Minh"))])
-    async def queue_loop(self):
+    async def queue_loop(self, *, cleanup_old_threads: bool = True):
         # Clean up old threads
-        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id IS NOT NULL AND deleted = FALSE") as cursor:
-            stale_channels = await cursor.fetchall()
+        if cleanup_old_threads:
+            async with self.bot.db.execute(
+                "SELECT * FROM thread_name_queue WHERE thread_id IS NOT NULL AND deleted = FALSE"
+            ) as cursor:
+                stale_channels = await cursor.fetchall()
 
-            for stale_channel in stale_channels:
-                (id, thread_name, _, thread_id, created, _) = stale_channel
-                created_time = datetime.strptime(created, "%Y-%m-%d %H:%M:%S").replace(tzinfo=UTC)
+                for stale_channel in stale_channels:
+                    (id, thread_name, _, thread_id, created, _) = stale_channel
+                    created_time = datetime.strptime(
+                        created, "%Y-%m-%d %H:%M:%S"
+                    ).replace(tzinfo=UTC)
 
-                if datetime.now(UTC) - created_time >= timedelta(days=1):
-                    channel = self.bot.get_channel(thread_id)
+                    if datetime.now(UTC) - created_time >= timedelta(days=1):
+                        channel = self.bot.get_channel(thread_id)
 
-                    if channel is not None:
-                        await channel.delete()
-                    
-                    await self.bot.db.execute("UPDATE thread_name_queue SET deleted = TRUE WHERE id = ?", (id,))
-            
-            await self.bot.db.commit()
+                        if channel is not None:
+                            await channel.delete()
+
+                        await self.bot.db.execute(
+                            "UPDATE thread_name_queue SET deleted = TRUE WHERE id = ?",
+                            (id,),
+                        )
+
+                await self.bot.db.commit()
 
         nsfw_channel = self.bot.get_channel(int(self.bot.cfg["NSFW_CHANNEL_ID"]))
         if nsfw_channel is None or not isinstance(nsfw_channel, discord.TextChannel):
             return
 
-        async with self.bot.db.execute("SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE") as cursor:
+        async with self.bot.db.execute(
+            "SELECT * FROM thread_name_queue WHERE thread_id IS NULL AND deleted = FALSE"
+        ) as cursor:
             row = await cursor.fetchone()
             if row is None:
                 return
@@ -360,7 +357,11 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
 
         if id is not None:
             await self.bot.db.execute(
-                "UPDATE thread_name_queue SET thread_id = ?, created = CURRENT_TIMESTAMP WHERE id = ?", (thread.id, id,)
+                "UPDATE thread_name_queue SET thread_id = ?, created = CURRENT_TIMESTAMP WHERE id = ?",
+                (
+                    thread.id,
+                    id,
+                ),
             )
             await self.bot.db.commit()
 

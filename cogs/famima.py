@@ -261,8 +261,8 @@ class FamimaGachaCog(commands.Cog):
                 json={"memberCode": member_code},
                 headers={
                     "content-type": "application/json; charset=utf-8",
-                    "user-agent": "Dart/2.18 (dart:io)"
-                }
+                    "user-agent": "Dart/2.18 (dart:io)",
+                },
             )
             autogen_data = await resp.json()
 

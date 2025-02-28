@@ -9,8 +9,7 @@ class Scraper(Protocol):
     base_url: str
     session: ClientSession = ClientSession()
 
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     def __del__(self):
         asyncio.create_task(self.close())
@@ -27,8 +26,6 @@ class Scraper(Protocol):
     async def close(self) -> None:
         await self.session.close()
 
-    def find_url(self, content: str) -> Optional[str]:
-        ...
+    def find_url(self, content: str) -> Optional[str]: ...
 
-    async def get_manga_details(self, uri: str) -> MangaDetails:
-        ...
+    async def get_manga_details(self, uri: str) -> MangaDetails: ...
