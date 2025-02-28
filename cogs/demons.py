@@ -407,6 +407,9 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
             if full_member is None:
                 full_member = await guild.fetch_member(member.id)
 
+            if full_member.guild_permissions.administrator:
+                return
+
             if all(
                 str(x.id) not in self.bot.cfg["SOCIETY_ROLE_IDS"]
                 for x in full_member.roles
