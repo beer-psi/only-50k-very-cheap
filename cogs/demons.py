@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import discord
+from discord.types.snowflake import Snowflake
 import typst
 from aiohttp import web
 from discord.http import Route
@@ -364,6 +365,38 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
                 ),
             )
             await self.bot.db.commit()
+    
+    @commands.Cog.listener()
+    async def on_thread_member_join(self, member: discord.ThreadMember):
+        nsfw_channel_id = int(self.bot.cfg["NSFW_CHANNEL_ID"])  # pyright: ignore[reportArgumentType]
+
+        # Check if the parent of the thread being joined is the NSFW channel
+        if member.thread.parent_id != nsfw_channel_id:
+            return
+
+        # Check if the thread is one we manage
+        async with self.bot.db.execute(
+            "SELECT * FROM thread_name_queue WHERE thread_id = ?",
+            (member.thread_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+
+            # some auxiliary threads we handle
+            if row is None and member.thread_id not in {
+                1311944713355526174,  # food
+                1156264191154475109,  # confessions
+                1202627339515592704,  # archive
+                1173190577257447575,  # code
+                1325871617850609686,  # old demon threads
+                1277673920996180079,
+                1326243164067069955,
+            }:
+                return
+        
+        if str(member.id) not in self.bot.cfg["SOCIETY_USER_IDS"]:
+            await member.thread.remove_user(member)
+
+
 
     # @commands.Cog.listener()
     # async def on_presence_update(self, before: discord.Member, after: discord.Member):
