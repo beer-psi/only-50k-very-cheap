@@ -394,8 +394,25 @@ và cũng mong đối phương sẽ ko đả động hay gây ảnh hưởng gì
                 return
         
         if str(member.id) not in self.bot.cfg["SOCIETY_USER_IDS"]:
-            await member.thread.remove_user(member)
+            # if we can't get the guild object to fetch the member,
+            # just kick it
+            if member.thread.parent is None:
+                await member.thread.remove_user(member)
+                return
 
+            # check if the user has a whitelisted role (primarily bots)
+            guild = member.thread.parent.guild
+            full_member = guild.get_member(member.id)
+
+            if full_member is None:
+                full_member = await guild.fetch_member(member.id)
+
+            if all(
+                str(x.id) not in self.bot.cfg["SOCIETY_ROLE_IDS"]
+                for x in full_member.roles
+            ):
+                await member.thread.remove_user(member)
+                
 
 
     # @commands.Cog.listener()
